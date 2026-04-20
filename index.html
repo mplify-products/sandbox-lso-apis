@@ -389,7 +389,7 @@
 
     /* API Dropdown */
     #api-dropdown-wrap {
-      position: fixed; top: 200px; left: 32px;
+      position: fixed; top: 260px; left: 32px;
       z-index: 10;
       display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
       opacity: 0; animation: slideDown .7s ease .6s forwards;
@@ -478,7 +478,7 @@
 
     /* Zoom slider */
     #zoom-wrap {
-      position: fixed; top: 280px; left: 32px;
+      position: fixed; top: 366px; left: 32px;
       z-index: 10;
       width: 210px;
       background: rgba(10,18,40,0.85);
@@ -1250,21 +1250,7 @@ hub-buy,hub-sell`;
     .style("opacity", 0)
     .call(sel => sel.transition().duration(900).delay(500).style("opacity", 1));
 
-  // Hub link label — subtitle text floated over the hub-to-hub connector
-  const hubLinkLabel = g.append("text")
-    .attr("text-anchor", "middle")
-    .attr("dominant-baseline", "central")
-    .attr("fill", "rgba(232,237,245,0.6)")
-    .attr("font-size", "13px")
-    .attr("font-weight", 400)
-    .attr("font-family", "'DM Sans', sans-serif")
-    .attr("letter-spacing", "0.4px")
-    .attr("pointer-events", "none")
-    .style("opacity", 0)
-    .text(window._subtitleText || "");
 
-  // Reveal label once subtitle is set
-  setTimeout(() => hubLinkLabel.text(window._subtitleText || "").style("opacity", 1), 800);
 
   /* ─────────────────────────────────────────────
      NODES
@@ -1614,12 +1600,7 @@ hub-buy,hub-sell`;
       const x1 = d.source.x + ux * rs, y1 = d.source.y + uy * rs;
       const x2 = d.target.x - ux * rt, y2 = d.target.y - uy * rt;
       d3.select(this).attr("d", `M${x1},${y1} L${x2},${y2}`);
-      // Position subtitle label at midpoint of hub-to-hub link
-      if (d._type === "hub") {
-        const mx = (d.source.x + d.target.x) / 2;
-        const my = (d.source.y + d.target.y) / 2;
-        hubLinkLabel.attr("x", mx).attr("y", my - 10);
-      }
+
     });
     nodeSel.attr("transform", d => `translate(${d.x},${d.y})`);
   });
