@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>LSO API Partners - Sandbox</title>
+  <title>LSO API Partners</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -142,6 +142,89 @@
       transform: scale(1.04);
       box-shadow: 0 6px 24px rgba(61,123,199,0.6);
     }
+    /* Roster drawer button */
+    #roster-btn {
+      position: fixed; top: 360px; left: 220px;
+      z-index: 10;
+      background: linear-gradient(135deg, #1a6644, #144d33);
+      color: #fff;
+      border: none; border-radius: 20px;
+      padding: 9px 22px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(26,102,68,0.4);
+      transition: transform .15s, box-shadow .15s;
+      opacity: 0; animation: slideUp .7s ease 1.1s forwards;
+      white-space: nowrap;
+    }
+    #roster-btn:hover {
+      transform: scale(1.04);
+      box-shadow: 0 6px 24px rgba(26,102,68,0.6);
+    }
+    /* Roster bottom drawer */
+    #roster-drawer {
+      position: fixed; bottom: -420px; left: 0; right: 0;
+      height: 400px;
+      background: #070F28;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      z-index: 51; overflow: hidden;
+      transition: bottom .35s ease;
+      padding: 24px 32px 28px;
+      display: flex; flex-direction: column;
+    }
+    #roster-drawer.active { bottom: 0; }
+    #roster-drawer h2 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 20px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: #fff; margin-bottom: 16px; flex-shrink: 0;
+    }
+    #roster-drawer .close-btn {
+      position: absolute; top: 20px; right: 28px;
+      font-size: 26px; color: var(--muted);
+      cursor: pointer; line-height: 1;
+      transition: color .15s;
+    }
+    #roster-drawer .close-btn:hover { color: #fff; }
+    #roster-columns {
+      display: flex; gap: 24px; flex: 1; overflow: hidden;
+    }
+    .roster-col {
+      flex: 1; display: flex; flex-direction: column;
+    }
+    .roster-col h3 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 15px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 10px; flex-shrink: 0;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .roster-col h3.buy  { color: #3D7BC7; }
+    .roster-col h3.sell { color: #FD7801; }
+    .roster-col-list {
+      overflow-y: auto; flex: 1;
+    }
+    .roster-col-list .roster-item {
+      font-size: 12px; line-height: 2;
+      color: var(--text);
+    }
+    .roster-col-list .roster-item a {
+      color: #7AAEE0; text-decoration: none;
+    }
+    .roster-col-list .roster-item a:hover { text-decoration: underline; }
+    .roster-col-list .roster-zoom {
+      color: #3D7BC7; cursor: pointer; margin-right: 5px;
+      font-size: 13px; opacity: 0.5; transition: opacity .15s;
+      user-select: none;
+    }
+    .roster-col-list .roster-zoom:hover { opacity: 1; }
+    .roster-col-list .roster-name {
+      cursor: pointer; color: var(--text);
+    }
+    .roster-col-list .roster-name:hover { color: #7AAEE0; text-decoration: underline; }
+
     /* Drawer overlay */
     #impl-overlay {
       display: none; position: fixed; inset: 0;
@@ -489,7 +572,7 @@
     <div style="font-size:13px;color:var(--muted);letter-spacing:0.3px;margin-bottom:2px;">Select infographic to display from the dropdown</div>
     <select id="api-select"><option>Loading APIs…</option></select>
     <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
-      <img id="lso-versions-img" src="https://mplify-products.github.io/sandbox-lso-apis/LSO_Versions_and_Releases.png"
+      <img id="lso-versions-img" src="https://mplify-products.github.io/lso-apis/LSO_Versions_and_Releases.png"
            alt="LSO Versions and Releases" title="LSO Versions and Releases" />
       <span style="font-size:10px;color:var(--muted);text-align:center;max-width:120px;line-height:1.4;">Click on preview to see LSO APIs, releases and versions</span>
     </div>
@@ -497,10 +580,28 @@
   <!-- Lightbox -->
   <div id="lightbox">
     <span id="lightbox-close">&times;</span>
-    <img src="https://mplify-products.github.io/sandbox-lso-apis/LSO_Versions_and_Releases.png" alt="LSO Versions and Releases" />
+    <img src="https://mplify-products.github.io/lso-apis/LSO_Versions_and_Releases.png" alt="LSO Versions and Releases" />
   </div>
   <!-- Implementation Survey Button -->
   <button id="impl-btn">&#10010; Share my API status</button>
+  <!-- Roster Drawer Button -->
+  <button id="roster-btn">&#9776; View Partners</button>
+
+  <!-- Roster Bottom Drawer -->
+  <div id="roster-drawer">
+    <span class="close-btn" id="roster-close">&times;</span>
+    <h2>Partner Companies</h2>
+    <div id="roster-columns">
+      <div class="roster-col">
+        <h3 class="buy">Buy Side</h3>
+        <div class="roster-col-list" id="drawer-buy-list"><span style="color:var(--muted);font-size:12px">Loading…</span></div>
+      </div>
+      <div class="roster-col">
+        <h3 class="sell">Sell Side</h3>
+        <div class="roster-col-list" id="drawer-sell-list"><span style="color:var(--muted);font-size:12px">Loading…</span></div>
+      </div>
+    </div>
+  </div>
 
   <!-- Drawer Overlay -->
   <div id="impl-overlay"></div>
@@ -573,18 +674,41 @@
   // ── URL parameter support ──────────────────────────────────────────
   // Use ?nodes=GID&links=GID in the browser URL to switch data sources
   // Example: index.html?nodes=111111&links=222222
-  // Sandbox — published CSV, no API key required
-  // Sandbox — uses published CSV (no API key required)
-  const BASE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS-vSGEUpW5SNzFOrygA9_3N9iNI1A3SF5CUOKXZTGI3pY_o2ae6oVkr6PTfJgido8Fvia7CYyFqeP2/pub?single=true&output=csv";
+  // Google Sheets API v4 — key restricted to mplify-products.github.io
+  const SHEET_ID   = "1xY0ZnweIXE3pDPyTfiT3nsvB7wCchLZIW5D6jAOFzuQ";
+  const API_KEY    = "AIzaSyCiYRPbPg2u3SlYm6CxcdgQDHn1yGM4rNs";
+  const API_BASE   = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values`;
   const DEFAULT_LINKS_GID = "1881293424";
 
-  // Fetch a sheet by GID from published CSV
+  // Map GID → sheet name for Sheets API
+  const GID_TO_NAME = {
+    "399938948":  "menu",
+    "1901457844": "meta-nodes",
+    "1881293424": "lso.av2.links",
+    "1279159249": "lso.poq2.links",
+    "2008560393": "lso.q4.links",
+    "930832971":  "lso.po5.links",
+    "2067951233": "form",
+    "1595771123": "badges",
+    "1595771123": "badges",
+  };
+
+  // Fetch a sheet by GID and return CSV-like parsed array of objects
   async function fetchSheet(gid) {
-    const url = BASE_URL + "&gid=" + gid + "&t=" + Date.now();
+    const name = GID_TO_NAME[gid];
+    if (!name) throw new Error("Unknown GID: " + gid);
+    const url = `${API_BASE}/${encodeURIComponent(name)}?key=${API_KEY}`;
     const resp = await fetch(url);
     if (!resp.ok) throw new Error("HTTP " + resp.status);
-    const csv = await resp.text();
-    return d3.csvParse(csv);
+    const json = await resp.json();
+    const rows = json.values || [];
+    if (rows.length < 2) return [];
+    const headers = rows[0].map(h => h.trim());
+    return rows.slice(1).map(row => {
+      const obj = {};
+      headers.forEach((h, i) => obj[h] = row[i] || "");
+      return obj;
+    });
   }
 
   // Convert array of objects to CSV string (for d3.csvParse compatibility)
@@ -596,8 +720,8 @@
     return lines.join("\n");
   }
 
-  const CONFIG_GID     = "399938948";
-  const META_NODES_GID = "1901457844";
+  const CONFIG_GID      = "399938948";
+  const META_NODES_GID  = "1901457844";
 
   // Map links_gid → meta-nodes column header
   const LINKS_GID_TO_COL = {
@@ -605,7 +729,6 @@
     "1279159249": "lso.poq2",
     "2008560393": "lso.q4",
     "930832971":  "lso.po5",
-    "1871851720": "non-lso",
   };
 
   // Fetch config tab and populate dropdown
@@ -795,8 +918,8 @@ hub-buy,hub-sell`;
   // Reveal title and subtitle now that correct text is set
   titleEl.style.visibility    = "visible";
   subtitleEl.style.visibility = "visible";
-  // Hub link label left blank — subtitle already shown in header
-  window._subtitleText = "";
+  // Store subtitle text so hubLinkLabel can pick it up once defined
+  window._subtitleText = subtitleEl.textContent;
 
   // Populate company rosters
   (function() {
@@ -1359,7 +1482,7 @@ hub-buy,hub-sell`;
         .attr("stroke-width", 1.5);
       // Mplify logo image
       a.append("image")
-        .attr("href", "https://mplify-products.github.io/sandbox-lso-apis/Mplify-logo.png")
+        .attr("href", "https://mplify-products.github.io/lso-apis/Mplify-logo.png")
         .attr("x", bx + pad).attr("y", by + pad)
         .attr("width", bw - pad * 2).attr("height", bh - pad * 2)
         .attr("preserveAspectRatio", "xMidYMid meet");
@@ -1544,6 +1667,41 @@ hub-buy,hub-sell`;
     var u = "info", d = "mplify.net";
     var a = document.getElementById("info-email");
     if (a) { a.href = "mailto:" + u + "@" + d; a.textContent = u + "@" + d; }
+  })();
+
+  // ── Roster Drawer ────────────────────────────────────────────────────────
+  (function() {
+    const rDrawer  = document.getElementById("roster-drawer");
+    const rOverlay = document.getElementById("impl-overlay");
+    const rBtn     = document.getElementById("roster-btn");
+    const rClose   = document.getElementById("roster-close");
+
+    function openRoster()  { rDrawer.classList.add("active");  rOverlay.classList.add("active"); }
+    function closeRoster() { rDrawer.classList.remove("active"); rOverlay.classList.remove("active"); }
+
+    rBtn.addEventListener("click", openRoster);
+    rClose.addEventListener("click", closeRoster);
+    rOverlay.addEventListener("click", closeRoster);
+  })();
+
+  // Populate drawer roster lists (reuse same nodes data)
+  (function() {
+    function renderDrawerList(el, items) {
+      if (!items.length) { el.innerHTML = '<span style="color:var(--muted);font-size:12px">None</span>'; return; }
+      el.innerHTML = items.map(n => {
+        const href = n.url ? (n.url.startsWith("http") ? n.url : "https://" + n.url) : null;
+        const escapedId = n.id.replace(/"/g, "&quot;");
+        const zoomBtn = `<span class="roster-zoom" onclick="window.zoomToNode(this.dataset.id)" data-id="${escapedId}" title="Zoom to node">⊕</span>`;
+        const nameHtml = href
+          ? `<a href="${href}" target="_blank" rel="noopener">${n.label}</a>`
+          : `<span class="roster-name" onclick="window.zoomToNode(this.dataset.id)" data-id="${escapedId}">${n.label}</span>`;
+        return `<div class="roster-item">${zoomBtn}${nameHtml}</div>`;
+      }).join("");
+    }
+    const buyNodes  = nodes.filter(n => n.type === "company" && n.group === "buy");
+    const sellNodes = nodes.filter(n => n.type === "company" && n.group === "sell");
+    renderDrawerList(document.getElementById("drawer-buy-list"),  buyNodes);
+    renderDrawerList(document.getElementById("drawer-sell-list"), sellNodes);
   })();
 
   })(); // end async IIFE
