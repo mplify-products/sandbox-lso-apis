@@ -795,8 +795,9 @@ hub-buy,hub-sell`;
   // Reveal title and subtitle now that correct text is set
   titleEl.style.visibility    = "visible";
   subtitleEl.style.visibility = "visible";
-  // Store subtitle text so hubLinkLabel can pick it up once defined
-  window._subtitleText = subtitleEl.textContent;
+  // Store short API label for hub link (use sheet/apiCol name, not full subtitle)
+  const selectedApiForLabel = apiConfig.find(r => r.links_gid === linksGid);
+  window._subtitleText = selectedApiForLabel ? (selectedApiForLabel.sheet || selectedApiForLabel.label || "") : "";
 
   // Populate company rosters
   (function() {
