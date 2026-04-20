@@ -142,9 +142,59 @@
       transform: scale(1.04);
       box-shadow: 0 6px 24px rgba(61,123,199,0.6);
     }
+    /* LSO Versions button */
+    #lso-versions-btn {
+      position: fixed; top: 400px; left: 32px;
+      z-index: 10;
+      background: linear-gradient(135deg, #5a3d8a, #3d2060);
+      color: #fff;
+      border: none; border-radius: 20px;
+      padding: 9px 22px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(90,61,138,0.4);
+      transition: transform .15s, box-shadow .15s;
+      opacity: 0; animation: slideUp .7s ease 1.1s forwards;
+      white-space: nowrap;
+    }
+    #lso-versions-btn:hover {
+      transform: scale(1.04);
+      box-shadow: 0 6px 24px rgba(90,61,138,0.6);
+    }
+    /* LSO Versions left drawer */
+    #lso-versions-drawer {
+      position: fixed; top: 0; left: -520px; width: 500px; height: 100%;
+      background: #070F28;
+      border-right: 1px solid rgba(255,255,255,0.1);
+      z-index: 51; overflow-y: auto;
+      transition: left .35s ease;
+      padding: 28px 28px 40px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    #lso-versions-drawer.active { left: 0; }
+    #lso-versions-drawer h2 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 20px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: #fff; margin-bottom: 16px; width: 100%;
+    }
+    #lso-versions-drawer .close-btn {
+      position: absolute; top: 20px; right: 22px;
+      font-size: 26px; color: var(--muted);
+      cursor: pointer; line-height: 1;
+      transition: color .15s;
+    }
+    #lso-versions-drawer .close-btn:hover { color: #fff; }
+    #lso-versions-drawer img {
+      width: 100%; height: auto;
+      border-radius: 6px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    }
+
     /* Roster drawer button */
     #roster-btn {
-      position: fixed; top: 360px; left: 220px;
+      position: fixed; top: 400px; left: 220px;
       z-index: 10;
       background: linear-gradient(135deg, #1a6644, #144d33);
       color: #fff;
@@ -584,6 +634,16 @@
   </div>
   <!-- Implementation Survey Button -->
   <button id="impl-btn">&#10010; Share my API status</button>
+  <!-- LSO Versions Button -->
+  <button id="lso-versions-btn">&#128196; Show LSO API versions</button>
+
+  <!-- LSO Versions Left Drawer -->
+  <div id="lso-versions-drawer">
+    <span class="close-btn" id="lso-versions-close">&times;</span>
+    <h2>LSO API Versions &amp; Releases</h2>
+    <img src="https://mplify-products.github.io/lso-apis/LSO_Versions_and_Releases.png"
+         alt="LSO Versions and Releases" />
+  </div>
   <!-- Roster Drawer Button -->
   <button id="roster-btn">&#9776; View Partners</button>
 
@@ -676,7 +736,7 @@
   // Example: index.html?nodes=111111&links=222222
   // Google Sheets API v4 — key restricted to mplify-products.github.io
   const SHEET_ID   = "1xY0ZnweIXE3pDPyTfiT3nsvB7wCchLZIW5D6jAOFzuQ";
-  const API_KEY    = "AIzaSyBO2A-xcrPpcj9g0ebdlnDlx1AjvP90xzQ";
+  const API_KEY    = "AIzaSyCiYRPbPg2u3SlYm6CxcdgQDHn1yGM4rNs";
   const API_BASE   = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values`;
   const DEFAULT_LINKS_GID = "1881293424";
 
@@ -1667,6 +1727,21 @@ hub-buy,hub-sell`;
     var u = "info", d = "mplify.net";
     var a = document.getElementById("info-email");
     if (a) { a.href = "mailto:" + u + "@" + d; a.textContent = u + "@" + d; }
+  })();
+
+  // ── LSO Versions Drawer ──────────────────────────────────────────────────
+  (function() {
+    const vDrawer  = document.getElementById("lso-versions-drawer");
+    const vOverlay = document.getElementById("impl-overlay");
+    const vBtn     = document.getElementById("lso-versions-btn");
+    const vClose   = document.getElementById("lso-versions-close");
+
+    function openVersions()  { vDrawer.classList.add("active");  vOverlay.classList.add("active"); }
+    function closeVersions() { vDrawer.classList.remove("active"); vOverlay.classList.remove("active"); }
+
+    vBtn.addEventListener("click", openVersions);
+    vClose.addEventListener("click", closeVersions);
+    vOverlay.addEventListener("click", closeVersions);
   })();
 
   // ── Roster Drawer ────────────────────────────────────────────────────────
