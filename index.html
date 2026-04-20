@@ -956,17 +956,23 @@ hub-buy,hub-sell`;
   const metaTitle    = allRows.find(d => d.id === "meta-title");
   const metaSubtitle = allRows.find(d => d.id === "meta-subtitle");
 
+  // Parse links first so we can use them to filter nodes when no column map exists
+  const links = d3.csvParse(links_csv);
+
   // Determine API column to filter on based on linksGid
   const apiCol = LINKS_GID_TO_COL[linksGid] || null;
   console.log("API column filter:", apiCol, "for linksGid:", linksGid);
 
+  // Build set of node IDs actually referenced in the links sheet
+  const linkedNodeIds = new Set();
+  links.forEach(l => { linkedNodeIds.add(l.source); linkedNodeIds.add(l.target); });
+
   const nodes = allRows.filter(d => {
     if (d.type === "meta") return false;   // exclude meta rows
     if (d.type === "hub")  return true;    // always include hub nodes
-    if (!apiCol)           return true;    // no filter if column unknown
-    return d[apiCol] && d[apiCol].toLowerCase() === "yes";
+    if (apiCol) return d[apiCol] && d[apiCol].toLowerCase() === "yes"; // column-based filter
+    return linkedNodeIds.has(d.id);        // fallback: only nodes present in links data
   });
-  const links = d3.csvParse(links_csv);
 
   // Apply dynamic title if present in sheet
   const titleEl    = document.getElementById("title");
