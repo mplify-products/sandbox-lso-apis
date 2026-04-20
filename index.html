@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LSO API Partners</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:     #04091A;
+      --grid:   rgba(255,255,255,0.03);
+      --text:   #E8EDF5;
+      --muted:  rgba(232,237,245,0.45);
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Ambient blobs — injected dynamically per group */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(110px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0;
+      animation: blobFade 2s ease forwards;
+    }
+    @keyframes blobFade { to { opacity: .55; } }
+
+    /* Header */
+    #header {
+      position: fixed; top: 0; left: 100px; right: 0;
+      padding: 27px 32px 0;
+      z-index: 10; pointer-events: none;
+    }
+    #title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 26px; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      opacity: 0; animation: slideDown .7s ease .2s forwards;
+    }
+    #subtitle {
+      margin-top: 5px; font-size: 26px;
+      color: var(--muted); letter-spacing: .4px;
+      opacity: 0; animation: slideDown .7s ease .4s forwards;
+    }
+    @keyframes slideDown {
+      from { opacity:0; transform:translateY(-10px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* Stats */
+    #stats {
+      position: fixed; top: 105px; left: 132px;
+      display: flex; gap: 28px;
+      z-index: 10;
+      opacity: 0; animation: slideDown .7s ease .5s forwards;
+    }
+    .stat { text-align: left; }
+    .stat-num {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px; font-weight: 700; line-height: 1;
+    }
+    .stat-lbl { font-size: 11px; color: var(--muted); letter-spacing: .5px; }
+
+    /* Legend */
+    #legend {
+      position: fixed; top: 185px; left: 32px;
+      display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+      z-index: 10;
+      opacity: 0; animation: slideDown .7s ease .9s forwards;
+    }
+    @keyframes slideUp {
+      from { opacity:0; transform:translateY(10px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .leg { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+    .leg-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+
+    /* Logo */
+    #logo {
+      position: fixed;
+      top: 34px;
+      left: 32px;
+      z-index: 10;
+      opacity: 0;
+      animation: slideDown .7s ease 1.1s forwards;
+    }
+    #logo img {
+      height: 64px;
+      width: auto;
+      filter: brightness(0) invert(1);
+      opacity: 0.85;
+    }
+
+    /* Hint */
+    #hint {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      font-size: 11px; color: var(--muted);
+      z-index: 10; white-space: nowrap;
+      opacity: 0; animation: slideUp .7s ease 1s forwards;
+    }
+
+    /* Implementation Form */
+    #impl-btn {
+      position: fixed; top: 360px; left: 32px;
+      z-index: 10;
+      background: linear-gradient(135deg, #3D7BC7, #2a5da0);
+      color: #fff;
+      border: none; border-radius: 20px;
+      padding: 9px 22px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(61,123,199,0.4);
+      transition: transform .15s, box-shadow .15s;
+      opacity: 0; animation: slideUp .7s ease 1.1s forwards;
+      white-space: nowrap;
+    }
+    #impl-btn:hover {
+      transform: scale(1.04);
+      box-shadow: 0 6px 24px rgba(61,123,199,0.6);
+    }
+    /* Drawer overlay */
+    #impl-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 50; backdrop-filter: blur(3px);
+    }
+    #impl-overlay.active { display: block; }
+    /* Drawer panel */
+    #impl-drawer {
+      position: fixed; top: 0; right: -790px; width: 770px; height: 100%;
+      background: #070F28;
+      border-left: 1px solid rgba(255,255,255,0.1);
+      z-index: 51; overflow-y: auto;
+      transition: right .3s ease;
+      padding: 28px 28px 40px;
+    }
+    #impl-drawer.active { right: 0; }
+    #impl-drawer h2 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 20px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: #fff; margin-bottom: 4px;
+    }
+    #impl-drawer .drawer-sub {
+      font-size: 12px; color: var(--muted); margin-bottom: 20px;
+    }
+    #impl-drawer .close-btn {
+      position: absolute; top: 20px; right: 22px;
+      font-size: 26px; color: var(--muted);
+      cursor: pointer; line-height: 1;
+      transition: color .15s;
+    }
+    #impl-drawer .close-btn:hover { color: #fff; }
+    /* Form fields */
+    .impl-field { margin-bottom: 14px; }
+    .impl-field label {
+      display: block; font-size: 12px;
+      color: var(--muted); margin-bottom: 5px; letter-spacing: .3px;
+    }
+    .impl-field input, .impl-field textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px;
+      color: #fff; font-family: 'DM Sans', sans-serif;
+      font-size: 13px; padding: 8px 12px;
+      outline: none; transition: border-color .15s;
+    }
+    .impl-field input:focus, .impl-field textarea:focus {
+      border-color: #3D7BC7;
+    }
+    /* API table */
+    #impl-table-wrap {
+      margin: 16px 0;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px; overflow: hidden;
+    }
+    #impl-table-wrap p {
+      font-size: 12px; color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .impl-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 11px;
+    }
+    .impl-table th {
+      background: rgba(255,255,255,0.06);
+      color: var(--muted); padding: 6px 8px;
+      text-align: left; font-weight: 500;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      white-space: nowrap;
+    }
+    .impl-table td {
+      padding: 5px 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      vertical-align: middle; color: var(--text);
+    }
+    .impl-table tr:last-child td { border-bottom: none; }
+    .impl-table tr:hover td { background: rgba(255,255,255,0.03); }
+    .impl-table .api-name { font-weight: 500; min-width: 160px; }
+    .impl-table .ver-cell { text-align: center; }
+    .impl-table input[type=checkbox] {
+      width: 14px; height: 14px; cursor: pointer;
+      accent-color: #3D7BC7;
+    }
+    /* Submit */
+    #impl-submit {
+      width: 100%; padding: 11px;
+      background: linear-gradient(135deg, #3D7BC7, #2a5da0);
+      color: #fff; border: none; border-radius: 6px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 600;
+      cursor: pointer; margin-top: 8px;
+      transition: opacity .15s;
+    }
+    #impl-submit:hover { opacity: .88; }
+    #impl-submit:disabled { opacity: .5; cursor: not-allowed; }
+    #impl-msg {
+      margin-top: 12px; font-size: 13px;
+      text-align: center; min-height: 20px;
+    }
+    #impl-msg.success { color: #81C784; }
+    #impl-msg.error   { color: #EF9A9A; }
+
+    /* Debug bar */
+    #debug-bar {
+      position: fixed; bottom: 6px; left: 50%; transform: translateX(-50%);
+      font-size: 10px; color: rgba(255,255,255,0.35);
+      font-family: monospace; z-index: 10;
+      opacity: 0; pointer-events: none;
+    }
+
+    /* API Dropdown */
+    #api-dropdown-wrap {
+      position: fixed; top: 430px; left: 32px;
+      z-index: 10;
+      display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+      opacity: 0; animation: slideDown .7s ease .6s forwards;
+    }
+    #lso-versions-img {
+      height: 144px; width: auto;
+      border-radius: 4px;
+      cursor: zoom-in;
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.15);
+    }
+    #lso-versions-img:hover {
+      transform: scale(1.02);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.4);
+    }
+    /* Lightbox */
+    #lightbox {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.88);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+      cursor: zoom-out;
+      backdrop-filter: blur(4px);
+      animation: fadeIn .2s ease;
+    }
+    #lightbox.active { display: flex; }
+    #lightbox img {
+      max-width: 92vw; max-height: 88vh;
+      border-radius: 6px;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.7);
+      pointer-events: none;
+    }
+    #lightbox-close {
+      position: fixed; top: 20px; right: 28px;
+      color: rgba(255,255,255,0.7);
+      font-size: 36px; line-height: 1;
+      cursor: pointer;
+      z-index: 101;
+      transition: color .15s;
+    }
+    #lightbox-close:hover { color: #fff; }
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+    #api-select {
+      background: rgba(10,18,40,0.85);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      padding: 6px 32px 6px 12px;
+      cursor: pointer;
+      outline: none;
+      backdrop-filter: blur(8px);
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.5)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      min-width: 280px;
+    }
+    #api-select:hover { border-color: rgba(255,255,255,0.35); }
+    #api-select option { background: #070F28; color: var(--text); }
+
+    /* Info box */
+    #info-box {
+      position: fixed; top: 230px; left: 32px;
+      width: 400px;
+      background: rgba(232,237,245,0.95);
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 8px;
+      padding: 13px;
+      font-size: 11px;
+      line-height: 1.1;
+      color: #1A2744;
+      z-index: 10;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.35);
+      opacity: 0; animation: slideDown .7s ease 1.2s forwards;
+    }
+    #info-box a { color: #2a5da0; text-decoration: none; font-weight: 600; }
+    #info-box a:hover { text-decoration: underline; }
+
+    /* Zoom slider */
+    #zoom-wrap {
+      position: fixed; top: 155px; left: 332px;
+      z-index: 10;
+      width: 210px;
+      background: rgba(10,18,40,0.85);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px; padding: 12px 16px;
+      backdrop-filter: blur(8px);
+      opacity: 0; animation: slideDown .7s ease 1.2s forwards;
+    }
+    #zoom-wrap .zoom-title {
+      font-size: 11px; color: var(--muted);
+      letter-spacing: 0.5px; margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    #zoom-wrap .zoom-row {
+      display: flex; align-items: center; gap: 10px;
+    }
+    #zoom-wrap label {
+      font-size: 11px; color: var(--muted); white-space: nowrap;
+    }
+    #zoom-slider {
+      -webkit-appearance: none; appearance: none;
+      width: 140px; height: 4px;
+      border-radius: 2px;
+      background: linear-gradient(to right, #3D7BC7 var(--pct, 40%), rgba(255,255,255,0.15) var(--pct, 40%));
+      outline: none; cursor: pointer;
+    }
+    #zoom-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #3D7BC7;
+      box-shadow: 0 0 6px rgba(61,123,199,0.6);
+      cursor: pointer;
+    }
+    #zoom-slider::-moz-range-thumb {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #3D7BC7; border: none;
+      box-shadow: 0 0 6px rgba(61,123,199,0.6);
+      cursor: pointer;
+    }
+    #zoom-label { font-size: 11px; color: var(--muted); min-width: 34px; }
+
+    /* Company roster panels */
+    #roster-wrap {
+      position: fixed; top: 720px; left: 32px;
+      width: 500px;
+      display: flex; gap: 10px;
+      z-index: 10;
+      opacity: 0; animation: slideUp .7s ease 1.3s forwards;
+    }
+    .roster-panel {
+      flex: 1;
+      background: rgba(232,237,245,0.95);
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 8px;
+      padding: 10px 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+      overflow-y: auto;
+      max-height: 200px;
+    }
+    .roster-panel h4 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      color: #1A2744; margin-bottom: 8px;
+      border-bottom: 1px solid rgba(61,123,199,0.2);
+      padding-bottom: 5px;
+    }
+    .roster-panel h4.buy  { color: #3D7BC7; }
+    .roster-panel h4.sell { color: #FD7801; }
+    .roster-item {
+      font-size: 11px; line-height: 1.8;
+      color: #1A2744;
+    }
+    .roster-item a {
+      color: #2a5da0; text-decoration: none;
+    }
+    .roster-item a:hover { text-decoration: underline; }
+    .roster-zoom {
+      color: var(--buy); cursor: pointer; margin-right: 5px;
+      font-size: 13px; opacity: 0.5; transition: opacity .15s;
+      user-select: none;
+    }
+    .roster-zoom:hover { opacity: 1; }
+    .roster-name {
+      cursor: pointer;
+    }
+    .roster-name:hover { color: #2a5da0; text-decoration: underline; }
+
+    /* Graph */
+    #graph {
+      position: fixed; inset: 0;
+      width: 100%; height: 100%;
+      z-index: 5;
+      cursor: grab;
+    }
+    #graph:active { cursor: grabbing; }
+
+    /* Tooltip */
+    #tooltip {
+      position: fixed;
+      background: rgba(8,15,36,0.93);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      pointer-events: auto;
+      z-index: 20;
+      opacity: 0; transition: opacity .2s;
+      backdrop-filter: blur(8px);
+    }
+    #tooltip .tip-name { font-weight: 600; margin-bottom: 3px; }
+    #tooltip .tip-type { font-size: 11px; color: var(--muted); }
+    #tooltip .tip-region { font-size: 11px; color: var(--muted); margin-top: 6px; }
+    #tooltip .tip-region:empty { display: none; }
+    #tooltip .tip-url { font-size: 11px; margin-top: 3px; }
+    #tooltip .tip-url a { color: #7AAEE0; text-decoration: none; }
+    #tooltip .tip-url a:hover { text-decoration: underline; }
+    #tooltip .tip-url:empty { display: none; }
+  </style>
+</head>
+<body>
+
+  <div id="header">
+    <div id="title" style="visibility:hidden">Interoperable LSO Partners - Illustration</div>
+    <div id="subtitle" style="visibility:hidden">LSO Address Validation API release 2 (lso.av.2)</div>
+  </div>
+
+  <div id="stats"></div>
+  <div id="legend"></div>
+  <div id="zoom-wrap">
+    <div class="zoom-title">Infographic zoom</div>
+    <div class="zoom-row">
+      <label style="font-size:11px;color:var(--muted)">&#128269;</label>
+      <input id="zoom-slider" type="range" min="0.2" max="3" step="0.05" value="0.5" />
+      <span id="zoom-label">50%</span>
+    </div>
+  </div>
+  <div id="hint">Drag · Scroll to zoom · Click pinned node to release</div>
+
+  <div id="logo">
+    <img src="https://www.mplify.net/wp-content/themes/base/images/logo.svg" alt="Mplify Alliance" />
+  </div>
+  <div id="api-dropdown-wrap">
+    <div style="font-size:13px;color:var(--muted);letter-spacing:0.3px;margin-bottom:2px;">Select infographic to display from the dropdown</div>
+    <select id="api-select"><option>Loading APIs…</option></select>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+      <img id="lso-versions-img" src="https://mplify-products.github.io/lso-apis/LSO_Versions_and_Releases.png"
+           alt="LSO Versions and Releases" title="LSO Versions and Releases" />
+      <span style="font-size:10px;color:var(--muted);text-align:center;max-width:120px;line-height:1.4;">Click on preview to see LSO APIs, releases and versions</span>
+    </div>
+  </div>
+  <!-- Lightbox -->
+  <div id="lightbox">
+    <span id="lightbox-close">&times;</span>
+    <img src="https://mplify-products.github.io/lso-apis/LSO_Versions_and_Releases.png" alt="LSO Versions and Releases" />
+  </div>
+  <!-- Implementation Survey Button -->
+  <button id="impl-btn">&#10010; Share my API status</button>
+
+  <!-- Drawer Overlay -->
+  <div id="impl-overlay"></div>
+
+  <!-- Drawer Panel -->
+  <div id="impl-drawer">
+    <span class="close-btn" id="impl-close">&times;</span>
+    <h2>LSO API Status Update</h2>
+    <p class="drawer-sub">Tell us which LSO APIs and versions your company has implemented.</p>
+
+    <div class="impl-field">
+      <label>Company Name *</label>
+      <input type="text" id="impl-company" placeholder="e.g. Acme Telecom" />
+    </div>
+    <div class="impl-field">
+      <label>Contact Email *</label>
+      <input type="email" id="impl-email" placeholder="you@company.com" />
+    </div>
+
+    <div id="impl-table-wrap">
+      <table class="impl-table" id="impl-table">
+        <thead>
+          <tr>
+            <th class="api-name">API / Product Version</th>
+            <th style="text-align:center">Buy Side</th>
+            <th style="text-align:center">Sell Side</th>
+          </tr>
+        </thead>
+        <tbody id="impl-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="impl-field">
+      <label>Comments (optional)</label>
+      <textarea id="impl-comments" rows="3" placeholder="Any additional notes…"></textarea>
+    </div>
+
+    <button id="impl-submit">Submit</button>
+    <div id="impl-msg"></div>
+  </div>
+
+  <!-- Company roster panels -->
+  <div id="roster-wrap">
+    <div class="roster-panel" id="roster-buy">
+      <h4 class="buy">Buy Side</h4>
+      <div id="roster-buy-list"><span class="roster-item" style="color:var(--muted)">Loading…</span></div>
+    </div>
+    <div class="roster-panel" id="roster-sell">
+      <h4 class="sell">Sell Side</h4>
+      <div id="roster-sell-list"><span class="roster-item" style="color:var(--muted)">Loading…</span></div>
+    </div>
+  </div>
+  <div id="debug-bar"></div>
+  <div id="info-box">This infographic shows the automation interoperability between companies on the buy and sell side based on the selected item in the dropdown. The data is continuously being updated. If you want to update your company's API status or add new API status data, please fill in the form below by clicking the '+Share my API status' button. For more information, please contact <a id="info-email" href="#"></a></div>
+  <svg id="graph"></svg>
+  <div id="tooltip">
+    <div class="tip-name"></div>
+    <div class="tip-type"></div>
+    <div class="tip-region"></div>
+    <div class="tip-url"></div>
+  </div>
+
+  <script>
+  (async function() {
+  /* ─────────────────────────────────────────────
+     PASTE YOUR CSV DATA HERE
+     Update nodes_csv and links_csv whenever your
+     data changes, then save and refresh.
+  ───────────────────────────────────────────── */
+  // ── URL parameter support ──────────────────────────────────────────
+  // Use ?nodes=GID&links=GID in the browser URL to switch data sources
+  // Example: index.html?nodes=111111&links=222222
+  // Google Sheets API v4 — key restricted to mplify-products.github.io
+  const SHEET_ID   = "1xY0ZnweIXE3pDPyTfiT3nsvB7wCchLZIW5D6jAOFzuQ";
+  const API_KEY    = "AIzaSyBO2A-xcrPpcj9g0ebdlnDlx1AjvP90xzQ";
+  const API_BASE   = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values`;
+  const DEFAULT_LINKS_GID = "1881293424";
+
+  // Map GID → sheet name for Sheets API
+  const GID_TO_NAME = {
+    "399938948":  "menu",
+    "1901457844": "meta-nodes",
+    "1881293424": "lso.av2.links",
+    "1279159249": "lso.poq2.links",
+    "2008560393": "lso.q4.links",
+    "930832971":  "lso.po5.links",
+    "2067951233": "form",
+    "1595771123": "badges",
+    "1595771123": "badges",
+  };
+
+  // Fetch a sheet by GID and return CSV-like parsed array of objects
+  async function fetchSheet(gid) {
+    const name = GID_TO_NAME[gid];
+    if (!name) throw new Error("Unknown GID: " + gid);
+    const url = `${API_BASE}/${encodeURIComponent(name)}?key=${API_KEY}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    const json = await resp.json();
+    const rows = json.values || [];
+    if (rows.length < 2) return [];
+    const headers = rows[0].map(h => h.trim());
+    return rows.slice(1).map(row => {
+      const obj = {};
+      headers.forEach((h, i) => obj[h] = row[i] || "");
+      return obj;
+    });
+  }
+
+  // Convert array of objects to CSV string (for d3.csvParse compatibility)
+  function toCsv(rows) {
+    if (!rows.length) return "";
+    const headers = Object.keys(rows[0]);
+    const lines = [headers.join(",")];
+    rows.forEach(r => lines.push(headers.map(h => JSON.stringify(r[h] || "")).join(",")));
+    return lines.join("\n");
+  }
+
+  const CONFIG_GID      = "399938948";
+  const META_NODES_GID  = "1901457844";
+
+  // Map links_gid → meta-nodes column header
+  const LINKS_GID_TO_COL = {
+    "1881293424": "lso.av2",
+    "1279159249": "lso.poq2",
+    "2008560393": "lso.q4",
+    "930832971":  "lso.po5",
+  };
+
+  // Fetch config tab and populate dropdown
+  const apiSelect = document.getElementById("api-select");
+  let apiConfig = [];
+  try {
+    apiConfig = (await fetchSheet(CONFIG_GID)).filter(r => r.label && r.links_gid);
+    apiSelect.innerHTML = apiConfig.map(r =>
+      `<option value="${r.links_gid}">${r.label}</option>`
+    ).join("");
+  } catch(e) {
+    console.warn("Could not fetch API config:", e);
+    apiConfig = [
+      { label: "Internet Access std139 v0.2.0",   nodes_gid: "234225689",  links_gid: "1077047330" },
+      { label: "Internet Access std139 v0.3.0",   nodes_gid: "1365793813", links_gid: "1881293424" },
+      { label: "Internet Access std139.1 v0.0.1", nodes_gid: "1066942469", links_gid: "554762381"  },
+      { label: "Internet Access std139.1 v1.00",  nodes_gid: "1445882970", links_gid: "863539780"  },
+    ];
+    apiSelect.innerHTML = apiConfig.map(r =>
+      `<option value="${r.links_gid}">${r.label}</option>`
+    ).join("");
+  }
+
+  // Switch infographic when dropdown changes
+  apiSelect.addEventListener("change", () => {
+    const lg = apiSelect.value;
+    const url = new URL(window.location.href);
+    url.searchParams.set("links", lg);
+    url.searchParams.delete("nodes");
+    window.location.href = url.toString();
+  });
+
+  // Set dropdown to current selection based on URL params
+  const params     = new URLSearchParams(window.location.search);
+  const linksGid   = params.get("links") || DEFAULT_LINKS_GID;
+  const matchOpt   = [...apiSelect.options].find(o => o.value === linksGid);
+  if (matchOpt) matchOpt.selected = true;
+
+  // Debug bar — shows active GIDs and data source
+  const debugBar = document.getElementById("debug-bar");
+  debugBar.textContent = `links gid: ${linksGid}`;
+  debugBar.style.opacity = "1";
+
+  // Nodes fetched via Sheets API
+  let nodes_csv, nodes_source = "live";
+  try {
+    const nodesRows = await fetchSheet(META_NODES_GID);
+    nodes_csv = toCsv(nodesRows);
+  } catch(e) {
+    nodes_source = "fallback";
+    console.warn("Could not fetch nodes:", e);
+    // Fallback to last known data
+    nodes_csv = `id,label,type,group,importance,url,region,glf,solution provider
+hub-buy,Buy side,hub,buy,,,,,
+hub-sell,Sell side,hub,sell,,,,,
+amartus-buy,Amartus,company,buy,medium,www.amartus.com,Worldwide,,yes
+amartus-sell,Amartus,company,sell,medium,www.amartus.com,Worldwide,,yes
+att-buy,AT&T,company,buy,high,www.att.com,Worldwide,yes,
+cmc-buy,CMC Networks,company,buy,medium,www.cmcnetworks.com,South Africa,,
+colt-sell,Colt,company,sell,high,www.colt.net,Europe,yes,
+cox-buy,Cox,company,buy,medium,www.cox.com,USA,,
+cox-sell,Cox,company,sell,medium,www.cox.com,USA,,
+dcconnect-buy,DCConnect,company,buy,low,,,,
+dcconnect-sell,DCConnect,company,sell,low,,,,
+dt-sell,Deutsche Telekom,company,sell,high,,,yes,
+enxoo-buy,Enxoo,company,buy,low,,,,
+enxoo-sell,Enxoo,company,sell,low,,,,
+eunetworks-sell,euNetworks,company,sell,low,,,yes,
+frontier-sell,Frontier,company,sell,medium,,,,
+orange-buy,Orange,company,buy,high,www.orange.com,,yes,
+orange-sell,Orange,company,sell,high,www.orange.com,,yes,
+sparkle-sell,Sparkle,company,sell,high,,,yes,
+transunion-buy,Transunion,company,buy,low,,,,yes
+transunion-sell,Transunion,company,sell,low,,,,yes`;
+  }
+
+  // Links fetched via Sheets API
+  let links_csv, links_source = "live";
+  try {
+    const linksRows = await fetchSheet(linksGid);
+    links_csv = toCsv(linksRows);
+  } catch(e) {
+    links_source = "fallback";
+    console.warn("Could not fetch links:", e);
+    // Fallback to last known data
+    links_csv = `source,target
+amartus-buy,hub-buy
+amartus-sell,hub-sell
+att-buy,hub-buy
+cmc-buy,hub-buy
+colt-sell,hub-sell
+cox-buy,hub-buy
+cox-sell,hub-sell
+dcconnect-buy,hub-buy
+dcconnect-sell,hub-sell
+dt-sell,hub-sell
+enxoo-buy,hub-buy
+enxoo-sell,hub-sell
+eunetworks-sell,hub-sell
+frontier-sell,hub-sell
+orange-buy,hub-buy
+orange-sell,hub-sell
+sparkle-sell,hub-sell
+transunion-buy,hub-buy
+transunion-sell,hub-sell
+hub-buy,hub-sell`;
+  }
+
+  // Fetch badge URLs from badges tab
+  const badgeUrls = {
+    glf:               "https://glfcommunity.com/",
+    mplify:            "https://www.mplify.net",
+    solution_provider: "",
+    lso_certified:     "",
+  };
+  try {
+    const badgeRows = await fetchSheet("1595771123");
+    badgeRows.forEach(r => {
+      if (r.badge && r.url) badgeUrls[r.badge.trim()] = r.url.trim();
+    });
+    console.log("Badge URLs loaded:", badgeUrls);
+  } catch(e) {
+    console.warn("Could not fetch badge URLs, using defaults:", e);
+  }
+
+  // Read title and subtitle from menu config for selected API
+  const selectedApi  = apiConfig.find(r => r.links_gid === linksGid);
+  const apiMainTitle = selectedApi && selectedApi["main title"] ? selectedApi["main title"] : null;
+  const apiSubtitle  = selectedApi && selectedApi["subtitle"]   ? selectedApi["subtitle"]  : null;
+
+  // Update debug bar with source info
+  debugBar.textContent = `links gid: ${linksGid} [${links_source}] | nodes [${nodes_source}]`;
+
+  /* ─────────────────────────────────────────────
+     COLOR PALETTE
+     Groups are auto-detected from the data.
+     Add / change entries here to customise.
+     Format: "group-name": { main, light, glow }
+  ───────────────────────────────────────────── */
+  const palette = {
+    buy:     { main:"#3D7BC7", light:"#7AAEE0", glow:"rgba(61,123,199,0.4)"  },
+    sell:    { main:"#FD7801", light:"#FFA04D", glow:"rgba(253,120,1,0.4)"   },
+    // extras — used automatically for any other group names
+    _auto: [
+      { main:"#4CAF50", light:"#81C784", glow:"rgba(76,175,80,0.4)"   },
+      { main:"#9C27B0", light:"#CE93D8", glow:"rgba(156,39,176,0.4)"  },
+      { main:"#00BCD4", light:"#80DEEA", glow:"rgba(0,188,212,0.4)"   },
+      { main:"#F44336", light:"#EF9A9A", glow:"rgba(244,67,54,0.4)"   },
+      { main:"#FFEB3B", light:"#FFF176", glow:"rgba(255,235,59,0.4)"  },
+    ]
+  };
+
+  /* ─────────────────────────────────────────────
+     PARSE
+  ───────────────────────────────────────────── */
+  const allRows = d3.csvParse(nodes_csv);
+  // Extract meta rows before rendering
+  const metaTitle    = allRows.find(d => d.id === "meta-title");
+  const metaSubtitle = allRows.find(d => d.id === "meta-subtitle");
+
+  // Determine API column to filter on based on linksGid
+  const apiCol = LINKS_GID_TO_COL[linksGid] || null;
+  console.log("API column filter:", apiCol, "for linksGid:", linksGid);
+
+  const nodes = allRows.filter(d => {
+    if (d.type === "meta") return false;   // exclude meta rows
+    if (d.type === "hub")  return true;    // always include hub nodes
+    if (!apiCol)           return true;    // no filter if column unknown
+    return d[apiCol] && d[apiCol].toLowerCase() === "yes";
+  });
+  const links = d3.csvParse(links_csv);
+
+  // Apply dynamic title if present in sheet
+  const titleEl    = document.getElementById("title");
+  const subtitleEl = document.getElementById("subtitle");
+  // Prefer menu sheet title/subtitle over meta-nodes rows
+  if (apiMainTitle) {
+    titleEl.textContent = apiMainTitle.toUpperCase();
+  } else if (metaTitle && metaTitle.label) {
+    titleEl.textContent = metaTitle.label.toUpperCase();
+  }
+  if (apiSubtitle) {
+    subtitleEl.textContent = apiSubtitle;
+  } else if (metaSubtitle && metaSubtitle.label) {
+    subtitleEl.textContent = metaSubtitle.label;
+  }
+  // Reveal title and subtitle now that correct text is set
+  titleEl.style.visibility    = "visible";
+  subtitleEl.style.visibility = "visible";
+  // Store subtitle text so hubLinkLabel can pick it up once defined
+  window._subtitleText = subtitleEl.textContent;
+
+  // Populate company rosters
+  (function() {
+    const buyList  = document.getElementById("roster-buy-list");
+    const sellList = document.getElementById("roster-sell-list");
+    const buyNodes  = nodes.filter(n => n.type === "company" && n.group === "buy");
+    const sellNodes = nodes.filter(n => n.type === "company" && n.group === "sell");
+    function renderList(el, items) {
+      if (!items.length) { el.innerHTML = '<span class="roster-item" style="color:var(--muted)">None</span>'; return; }
+      el.innerHTML = items.map(n => {
+        const href = n.url ? (n.url.startsWith("http") ? n.url : "https://" + n.url) : null;
+        const escapedId = n.id.replace(/"/g, "&quot;");
+        const zoomBtn = `<span class="roster-zoom" onclick="window.zoomToNode(this.dataset.id)" data-id="${escapedId}" title="Zoom to node">⊕</span>`;
+        const nameHtml = href
+          ? `<a href="${href}" target="_blank" rel="noopener" onclick="window.zoomToNode('${escapedId}');return false;">${n.label}</a>`
+          : `<span class="roster-name" onclick="window.zoomToNode(this.dataset.id)" data-id="${escapedId}">${n.label}</span>`;
+        return `<div class="roster-item">${zoomBtn}${nameHtml}</div>`;
+      }).join("");
+    }
+    renderList(buyList,  buyNodes);
+    renderList(sellList, sellNodes);
+  })();
+
+  // Assign colors to groups
+  const groups   = [...new Set(nodes.map(d => d.group))];
+  const colorMap = {};
+  let   autoIdx  = 0;
+  groups.forEach(g => {
+    colorMap[g] = palette[g] || palette._auto[autoIdx++ % palette._auto.length];
+  });
+
+  function col(d)    { return colorMap[d.group]; }
+  function radius(d) {
+    if (d.type === "hub") return 56;
+    if (d.importance === "high")   return 42;
+    if (d.importance === "low")    return 22;
+    return 32; // medium (default)
+  }
+
+  // Determine hub-to-hub links (both endpoints have type=hub)
+  const nodeById = Object.fromEntries(nodes.map(n => [n.id, n]));
+
+  // Detect labels that appear in both buy and sell groups
+  const buyLabels  = new Set(nodes.filter(n => n.group === "buy"  && n.type !== "hub").map(n => n.label));
+  const sellLabels = new Set(nodes.filter(n => n.group === "sell" && n.type !== "hub").map(n => n.label));
+  const sharedLabels = new Set([...buyLabels].filter(l => sellLabels.has(l)));
+  nodes.forEach(n => { n._shared = sharedLabels.has(n.label); });
+  links.forEach(l => {
+    const s = nodeById[l.source], t = nodeById[l.target];
+    l._type = (s?.type === "hub" && t?.type === "hub") ? "hub" : t?.group || s?.group || "default";
+  });
+
+  /* ─────────────────────────────────────────────
+     AMBIENT BLOBS
+  ───────────────────────────────────────────── */
+  const blobPositions = [
+    { top:"-100px", left:"-100px" },
+    { bottom:"-80px", right:"-80px" },
+    { top:"40%", left:"50%" },
+  ];
+  groups.forEach((g, i) => {
+    const div = document.createElement("div");
+    div.className = "blob";
+    const pos = blobPositions[i % blobPositions.length];
+    Object.assign(div.style, {
+      width:"480px", height:"480px",
+      background: colorMap[g].glow,
+      animationDelay: `${0.3 + i * 0.3}s`,
+      ...pos
+    });
+    document.body.appendChild(div);
+  });
+
+  /* ─────────────────────────────────────────────
+     STATS BAR
+  ───────────────────────────────────────────── */
+  const statsEl = document.getElementById("stats");
+  groups.forEach(g => {
+    const count = nodes.filter(n => n.group === g && n.type !== "hub").length;
+    const c = colorMap[g];
+    const div = document.createElement("div");
+    div.className = "stat";
+    div.innerHTML = `
+      <div class="stat-num" style="color:${c.main}">${count}</div>
+      <div class="stat-lbl">${g.toUpperCase()} PARTNERS</div>`;
+    statsEl.appendChild(div);
+  });
+
+  /* ─────────────────────────────────────────────
+     LEGEND
+  ───────────────────────────────────────────── */
+  const legendEl = document.getElementById("legend");
+  groups.forEach(g => {
+    const c = colorMap[g];
+    const div = document.createElement("div");
+    div.className = "leg";
+    div.innerHTML = `
+      <div class="leg-dot" style="background:${c.main};box-shadow:0 0 8px ${c.glow}"></div>
+      <span>${g.charAt(0).toUpperCase()+g.slice(1)} Side</span>`;
+    legendEl.appendChild(div);
+  });
+
+  // Shared participant legend entry
+  if (sharedLabels.size > 0) {
+    const div = document.createElement("div");
+    div.className = "leg";
+    div.innerHTML = `
+      <div class="leg-dot" style="background:linear-gradient(135deg,#3D7BC7,#FD7801);box-shadow:0 0 8px rgba(156,111,255,0.5)"></div>
+      <span>Buy &amp; Sell Sides</span>`;
+    legendEl.appendChild(div);
+  }
+
+  /* ─────────────────────────────────────────────
+     SVG
+  ───────────────────────────────────────────── */
+  const W = window.innerWidth, H = window.innerHeight;
+  const svg = d3.select("#graph").attr("viewBox", [0, 0, W, H]);
+  const defs = svg.append("defs");
+
+  // Glow filters — one per group
+  groups.forEach(g => {
+    const c = colorMap[g];
+    ["", "S"].forEach(suffix => {
+      const std = suffix ? 5 : 12;
+      const f = defs.append("filter")
+        .attr("id", `glow-${g}${suffix}`)
+        .attr("x","-60%").attr("y","-60%")
+        .attr("width","220%").attr("height","220%");
+      f.append("feFlood").attr("flood-color", c.main).attr("result","col");
+      f.append("feComposite").attr("in","col").attr("in2","SourceAlpha")
+        .attr("operator","in").attr("result","col2");
+      f.append("feGaussianBlur").attr("in","col2").attr("stdDeviation", std).attr("result","blur");
+      const m = f.append("feMerge");
+      m.append("feMergeNode").attr("in","blur");
+      m.append("feMergeNode").attr("in","SourceGraphic");
+    });
+  });
+
+  // Gradient for shared-participant ring
+  const grad = defs.append("linearGradient")
+    .attr("id", "grad-shared")
+    .attr("x1", "0%").attr("y1", "0%")
+    .attr("x2", "100%").attr("y2", "100%");
+  grad.append("stop").attr("offset", "0%")  .attr("stop-color", "#3D7BC7");
+  grad.append("stop").attr("offset", "50%") .attr("stop-color", "#9C6FFF");
+  grad.append("stop").attr("offset", "100%").attr("stop-color", "#FD7801");
+
+  // Arrow for hub-hub link
+  defs.append("marker")
+    .attr("id","arrow").attr("viewBox","0 -5 10 10")
+    .attr("refX",14).attr("refY",0)
+    .attr("markerWidth",6).attr("markerHeight",6).attr("orient","auto")
+    .append("path").attr("d","M0,-5L10,0L0,5")
+    .attr("fill","rgba(255,255,255,0.3)");
+
+  const g = svg.append("g");
+
+  // Initial 20% zoom-out: centre the view at 0.8 scale
+  const initScale = 0.5;
+  const initX = (W - W * initScale) / 2 + 260; // +260px offset to clear left panel
+  const initY = (H - H * initScale) / 2 - 50;  // -50px offset to move up
+
+  // Start at 30% zoom then animate to 50% over 2 seconds
+  const startScale = 0.3;
+  const startX = (W - W * startScale) / 2 + 260;
+  const startY = (H - H * startScale) / 2 - 50;
+  const startTransform = d3.zoomIdentity.translate(startX, startY).scale(startScale);
+  const endTransform   = d3.zoomIdentity.translate(initX, initY).scale(initScale);
+
+  const zoomBehavior = d3.zoom().scaleExtent([0.2, 5])
+    .on("zoom", e => {
+      g.attr("transform", e.transform);
+      // Sync slider with current zoom
+      const s = e.transform.k;
+      const slider = document.getElementById("zoom-slider");
+      const label  = document.getElementById("zoom-label");
+      if (slider) slider.value = Math.min(3, Math.max(0.2, s));
+      if (slider) slider.style.setProperty("--pct", ((s - 0.2) / (3 - 0.2) * 100) + "%");
+      if (label)  label.textContent = Math.round(s * 100) + "%";
+    });
+  svg.call(zoomBehavior);
+  svg.call(zoomBehavior.transform, startTransform);
+
+  // Global zoom-to-node function for roster clicks
+  window.zoomToNode = function(nodeId) {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node || node.x === undefined) return;
+    const scale = 1.8;
+    const tx = W / 2 - node.x * scale;
+    const ty = H / 2 - node.y * scale;
+    svg.transition().duration(800).ease(d3.easeCubicInOut)
+      .call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+    nodeSel.transition().duration(300)
+      .style("opacity", n => n.id === nodeId ? 1 : 0.15);
+    linkSel.transition().duration(300)
+      .style("opacity", l => {
+        const sid = l.source.id || l.source;
+        const tid = l.target.id || l.target;
+        return (sid === nodeId || tid === nodeId) ? 1 : 0.08;
+      });
+    setTimeout(() => {
+      nodeSel.transition().duration(400).style("opacity", 1);
+      linkSel.transition().duration(400).style("opacity", 1);
+    }, 3000);
+  };
+
+  // Animate zoom from 30% to 50% over 2 seconds on load
+  setTimeout(() => {
+    svg.transition().duration(2000).ease(d3.easeCubicInOut)
+      .call(zoomBehavior.transform, endTransform);
+  }, 600);
+
+  // Wire up slider to control zoom
+  document.getElementById("zoom-slider").addEventListener("input", function() {
+    const s = parseFloat(this.value);
+    this.style.setProperty("--pct", ((s - 0.2) / (3 - 0.2) * 100) + "%");
+    document.getElementById("zoom-label").textContent = Math.round(s * 100) + "%";
+    svg.transition().duration(200).call(
+      zoomBehavior.transform,
+      d3.zoomIdentity.translate(W / 2, H / 2).scale(s).translate(-W / 2, -H / 2)
+    );
+  });
+
+
+
+  /* ─────────────────────────────────────────────
+     SIMULATION
+  ───────────────────────────────────────────── */
+  const sim = d3.forceSimulation(nodes)
+    .force("link", d3.forceLink(links).id(d => d.id)
+      .distance(d => d._type === "hub" ? 300 : 200)
+      .strength(0.7))
+    .force("charge", d3.forceManyBody().strength(-8000))
+    .force("center", d3.forceCenter(W / 2, H / 2))
+    .force("collide", d3.forceCollide().radius(d => radius(d) + 40).strength(1))
+    .force("x", d3.forceX(d => d.group === "buy" ? W * 0.3 : W * 0.7).strength(0.18))
+    .force("y", d3.forceY(H / 2).strength(0.05));
+
+  /* ─────────────────────────────────────────────
+     LINKS
+  ───────────────────────────────────────────── */
+  const linkSel = g.append("g").selectAll("path")
+    .data(links).join("path")
+    .attr("fill", "none")
+    .attr("stroke", d => {
+      if (d._type === "hub") return "rgba(255,255,255,0.22)";
+      const c = colorMap[d._type];
+      return c ? c.main.replace(")", ",0.6)").replace("rgb","rgba") : "rgba(255,255,255,0.3)";
+    })
+    .attr("stroke-width", d => d._type === "hub" ? 2 : 2)
+    .attr("stroke-dasharray", d => d._type === "hub" ? "7 4" : null)
+    .attr("stroke-linecap", "round")
+    .attr("marker-end", d => d._type === "hub" ? "url(#arrow)" : null)
+    .attr("d", "M0,0")
+    .style("opacity", 0)
+    .call(sel => sel.transition().duration(900).delay(500).style("opacity", 1));
+
+  // Hub link label — subtitle text floated over the hub-to-hub connector
+  const hubLinkLabel = g.append("text")
+    .attr("text-anchor", "middle")
+    .attr("dominant-baseline", "central")
+    .attr("fill", "rgba(232,237,245,0.6)")
+    .attr("font-size", "13px")
+    .attr("font-weight", 400)
+    .attr("font-family", "'DM Sans', sans-serif")
+    .attr("letter-spacing", "0.4px")
+    .attr("pointer-events", "none")
+    .style("opacity", 0)
+    .text(window._subtitleText || "");
+
+  // Reveal label once subtitle is set
+  setTimeout(() => hubLinkLabel.text(window._subtitleText || "").style("opacity", 1), 800);
+
+  /* ─────────────────────────────────────────────
+     NODES
+  ───────────────────────────────────────────── */
+  const nodeSel = g.append("g").selectAll("g")
+    .data(nodes).join("g")
+    .style("opacity", 0)
+    .style("cursor", "grab")
+    .call(
+      d3.drag()
+        .on("start", (e, d) => {
+          if (!e.active) sim.alphaTarget(0.3).restart();
+          d.fx = d.x; d.fy = d.y;
+        })
+        .on("drag", (e, d) => { d.fx = e.x; d.fy = e.y; })
+        .on("end",  (e, d) => { if (!e.active) sim.alphaTarget(0); })
+    )
+    .on("click", (e, d) => {
+      if (d.fx != null) {
+        d.fx = null; d.fy = null;
+        sim.alphaTarget(0.1).restart();
+        setTimeout(() => sim.alphaTarget(0), 600);
+      }
+    })
+    .on("mouseover", (e, d) => {
+      // Suppress tooltip when hovering over a badge element
+      if (e.target.closest("a") || e.target.tagName === "image") return;
+      // Tooltip
+      const tip = document.getElementById("tooltip");
+      const c = col(d);
+      tip.querySelector(".tip-name").textContent = d.label;
+      tip.querySelector(".tip-type").textContent =
+        d.type === "hub" ? "Hub · LSO Standard Interface" : `${d.group.charAt(0).toUpperCase()+d.group.slice(1)} Side`;
+      tip.querySelector(".tip-type").style.color = c.light;
+      const regionEl = tip.querySelector(".tip-region");
+      regionEl.textContent = d.region ? "🌍 " + d.region : "";
+      const urlEl = tip.querySelector(".tip-url");
+      if (d.url) {
+        const href = d.url.startsWith("http") ? d.url : "https://" + d.url;
+        urlEl.innerHTML = `<a href="${href}" target="_blank" rel="noopener">🔗 ${d.url}</a>`;
+      } else { urlEl.innerHTML = ""; }
+      tip.style.opacity = "1";
+      moveTip(e);
+
+      // Highlight: only apply for company nodes
+      if (d.type !== "company") return;
+      const oppositeGroup = d.group === "buy" ? "sell" : "buy";
+
+      // Determine highlighted node ids: hovered node + all company nodes in opposite group
+      const highlightIds = new Set(
+        nodes
+          .filter(n => n === d || (n.type === "company" && n.group === oppositeGroup))
+          .map(n => n.id)
+      );
+
+      // Dim/highlight nodes
+      nodeSel.transition().duration(150)
+        .style("opacity", n => highlightIds.has(n.id) ? 1 : 0.12);
+
+      // Dim/highlight links — highlight links connected to hovered node or opposite group companies
+      linkSel.transition().duration(150)
+        .style("opacity", l => {
+          const sid = l.source.id || l.source;
+          const tid = l.target.id || l.target;
+          return (highlightIds.has(sid) || highlightIds.has(tid)) ? 1 : 0.06;
+        });
+    })
+    .on("mousemove", e => moveTip(e))
+    .on("mouseout", (e, d) => {
+      // Delay hide so cursor can travel onto the tooltip
+      window._tipHideTimer = setTimeout(() => {
+        document.getElementById("tooltip").style.opacity = "0";
+        nodeSel.transition().duration(250).style("opacity", 1);
+        linkSel.transition().duration(250).style("opacity", 1);
+      }, 400);
+    });
+
+  function moveTip(e) {
+    const tip = document.getElementById("tooltip");
+    // Offset of 2px so tooltip is virtually touching the cursor — no gap
+    const x = e.clientX + 2, y = e.clientY + 2;
+    tip.style.left = (x + tip.offsetWidth  > window.innerWidth  ? e.clientX - tip.offsetWidth  - 2 : x) + "px";
+    tip.style.top  = (y + tip.offsetHeight > window.innerHeight ? e.clientY - tip.offsetHeight - 2 : y) + "px";
+  }
+
+  // Outer ring (hubs only)
+  nodeSel.filter(d => d.type === "hub")
+    .append("circle")
+    .attr("r", d => radius(d) + 12)
+    .attr("fill", "none")
+    .attr("stroke", d => col(d).glow)
+    .attr("stroke-width", 1)
+    .attr("stroke-dasharray", "4 3");
+
+  // Dual-colour ring for shared participants
+  nodeSel.filter(d => d._shared)
+    .append("circle")
+    .attr("r", d => radius(d) + 9)
+    .attr("fill", "none")
+    .attr("stroke-width", 2.5)
+    .attr("stroke", "url(#grad-shared)")
+    .attr("opacity", 0.85);
+
+  // Main circle
+  nodeSel.append("circle")
+    .attr("r", radius)
+    .attr("fill", d => {
+      const c = col(d);
+      return d.type === "hub"
+        ? c.main
+        : c.main.replace("rgb(","rgba(").replace(")",",0.15)").replace("#","").length > 9
+          ? hexToRgba(c.main, 0.15)
+          : hexToRgba(c.main, 0.15);
+    })
+    .attr("stroke", d => col(d).light)
+    .attr("stroke-width", d => d.type === "hub" ? 2.5 : 1.5)
+    .attr("filter", d => `url(#glow-${d.group}${d.type === "hub" ? "" : "S"})`);
+
+  // Labels — wrapping long labels across two lines
+  nodeSel.each(function(d) {
+    const grp  = d3.select(this);
+    const isHub = d.type === "hub";
+    const words = d.label.split(" ");
+    // Split into max 2 lines
+    const lines = words.length <= 2
+      ? words
+      : [words.slice(0, Math.ceil(words.length / 2)).join(" "),
+         words.slice(Math.ceil(words.length / 2)).join(" ")];
+    const companyFs = d.importance === "high" ? "17px" : "11px";
+    const lh = isHub ? 17 : (d.importance === "high" ? 19 : 14);
+    const totalH = (lines.length - 1) * lh;
+
+    lines.forEach((line, i) => {
+      grp.append("text")
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "central")
+        .attr("y", -totalH / 2 + i * lh)
+        .attr("fill", isHub ? "#fff" : col(d).light)
+        .attr("font-size", isHub ? "20px" : companyFs)
+        .attr("font-weight", isHub ? 700 : 500)
+        .attr("font-family", isHub
+          ? "'Barlow Condensed', sans-serif"
+          : "'DM Sans', sans-serif")
+        .attr("letter-spacing", isHub ? "1px" : "0.3px")
+        .attr("pointer-events", "none")
+        .text(isHub ? line.toUpperCase() : line);
+    });
+  });
+
+  // Count badges on hub nodes
+  nodeSel.filter(d => d.type === "hub")
+    .each(function(d) {
+      const grp   = d3.select(this);
+      const count = nodes.filter(n => n.type === "company" && n.group === d.group).length;
+      const c     = col(d);
+      const bx    = radius(d) * 0.72, by = -radius(d) * 0.72;
+      // Badge circle
+      grp.append("circle")
+        .attr("cx", bx).attr("cy", by)
+        .attr("r", 26)
+        .attr("fill", d.group === "buy" ? "#1A4A8A" : "#B35500")
+        .attr("stroke", c.light)
+        .attr("stroke-width", 1.5);
+      // Badge number
+      grp.append("text")
+        .attr("x", bx).attr("y", by)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "central")
+        .attr("fill", "#fff")
+        .attr("font-size", "33px")
+        .attr("font-weight", 700)
+        .attr("font-family", "'Barlow Condensed', sans-serif")
+        .attr("pointer-events", "none")
+        .text(count);
+    });
+
+  // Keep tooltip visible when cursor moves onto it
+  (function() {
+    const tip = document.getElementById("tooltip");
+    tip.addEventListener("mouseenter", () => {
+      clearTimeout(window._tipHideTimer);
+    });
+    tip.addEventListener("mouseleave", () => {
+      tip.style.opacity = "0";
+      nodeSel.transition().duration(250).style("opacity", 1);
+      linkSel.transition().duration(250).style("opacity", 1);
+    });
+  })();
+
+  // GLF badge on company nodes where glf === "yes"
+  nodeSel.filter(d => d.type === "company" && d.glf && d.glf.toLowerCase() === "yes")
+    .each(function(d) {
+      const grp = d3.select(this);
+      const r   = radius(d);
+      // Bottom-left corner overlaps circle at top-right
+      const blx = r * 0.62, bly = -r * 0.62;
+      const bw  = 54, bh = 30, pad = 3;
+      // Wrap in SVG anchor — entire badge is clickable
+      const a = grp.append("a")
+        .attr("href", badgeUrls.glf || "https://glfcommunity.com/")
+        .attr("target", "_blank")
+        .attr("rel", "noopener")
+        .style("cursor", "pointer");
+      // White badge background (logo has dark colours, needs white bg)
+      a.append("rect")
+        .attr("x", blx).attr("y", bly - bh)
+        .attr("width", bw).attr("height", bh)
+        .attr("rx", 4).attr("ry", 4)
+        .attr("fill", "#ffffff")
+        .attr("stroke", col(d).light)
+        .attr("stroke-width", 1.5);
+      // GLF logo image
+      a.append("image")
+        .attr("href", "https://cdn.asp.events/CLIENT_Delinian_88510B86_A1E4_E5AE_E5572932A0001A1B/sites/glf-telecoms/media/GLF-Logo-Website.png")
+        .attr("x", blx + pad).attr("y", bly - bh + pad)
+        .attr("width", bw - pad * 2).attr("height", bh - pad * 2)
+        .attr("preserveAspectRatio", "xMidYMid meet");
+    });
+
+  // Solution Provider badge — top-left corner overlaps circle
+  nodeSel.filter(d => d.type === "company" && d["solution provider"] && d["solution provider"].toLowerCase() === "yes")
+    .each(function(d) {
+      const grp = d3.select(this);
+      const r   = radius(d);
+      const fs  = 12, lh = 14, pad = 8;
+      const bw  = 56, bh = lh * 2 + pad * 2;
+      // 4:30 position = 135deg clockwise from 12 = (sin135, -cos135) = (0.707, 0.707)
+      // Top-left corner of badge just overlaps the circle edge
+      const bx  = r * 0.65, by = r * 0.65;
+      // Wrap in anchor if URL available
+      const spContainer = badgeUrls.solution_provider
+        ? grp.append("a").attr("href", badgeUrls.solution_provider).attr("target","_blank").attr("rel","noopener").style("cursor","pointer")
+        : grp;
+      spContainer.append("rect")
+        .attr("x", bx).attr("y", by)
+        .attr("width", bw).attr("height", bh)
+        .attr("rx", 3).attr("ry", 3)
+        .attr("fill", "#1a1a2e")
+        .attr("stroke", col(d).light)
+        .attr("stroke-width", 1.5);
+      // Line 1: Solution
+      spContainer.append("text")
+        .attr("x", bx + bw / 2).attr("y", by + pad + lh * 0.5)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "central")
+        .attr("fill", col(d).light)
+        .attr("font-size", fs + "px")
+        .attr("font-weight", 400)
+        .attr("font-family", "'DM Sans', sans-serif")
+        .attr("letter-spacing", "0.3px")
+        .attr("pointer-events", "none")
+        .text("Solution");
+      // Line 2: Provider
+      spContainer.append("text")
+        .attr("x", bx + bw / 2).attr("y", by + pad + lh * 1.5)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "central")
+        .attr("fill", col(d).light)
+        .attr("font-size", fs + "px")
+        .attr("font-weight", 400)
+        .attr("font-family", "'DM Sans', sans-serif")
+        .attr("letter-spacing", "0.3px")
+        .attr("pointer-events", "none")
+        .text("Provider");
+    });
+
+  // Mplify member badge — logo, top-left corner overlaps circle (10:30 position)
+  nodeSel.filter(d => d.type === "company" && d["mplify member"] && d["mplify member"].toLowerCase() === "yes")
+    .each(function(d) {
+      const grp = d3.select(this);
+      const r   = radius(d);
+      const bw  = 81, bh = 45, pad = 4;
+      // Top-left corner overlaps circle at 10:30 position
+      const bx  = -r * 0.62 - bw, by = -r * 0.62 - bh;
+      // Wrap in anchor linking to Mplify website
+      const a = grp.append("a")
+        .attr("href", badgeUrls.mplify || "https://www.mplify.net")
+        .attr("target", "_blank")
+        .attr("rel", "noopener")
+        .style("cursor", "pointer");
+      // Dark badge background to match logo
+      a.append("rect")
+        .attr("x", bx).attr("y", by)
+        .attr("width", bw).attr("height", bh)
+        .attr("rx", 4).attr("ry", 4)
+        .attr("fill", "#000000")
+        .attr("stroke", col(d).light)
+        .attr("stroke-width", 1.5);
+      // Mplify logo image
+      a.append("image")
+        .attr("href", "https://mplify-products.github.io/lso-apis/Mplify-logo.png")
+        .attr("x", bx + pad).attr("y", by + pad)
+        .attr("width", bw - pad * 2).attr("height", bh - pad * 2)
+        .attr("preserveAspectRatio", "xMidYMid meet");
+    });
+
+  // LSO Certified badge — bottom-left corner overlaps circle (7:30 position)
+  nodeSel.filter(d => d.type === "company" && d["lso certified"] && d["lso certified"].toLowerCase() === "yes")
+    .each(function(d) {
+      const grp = d3.select(this);
+      const r   = radius(d);
+      const fs  = 12, lh = 14, pad = 8;
+      const bw  = 56, bh = lh * 2 + pad * 2;
+      // 7:30 position — bottom-left: (-0.65r, 0.65r), badge extends left and down
+      const bx  = -r * 0.65 - bw, by = r * 0.65;
+      const lcContainer = badgeUrls.lso_certified
+        ? grp.append("a").attr("href", badgeUrls.lso_certified).attr("target","_blank").attr("rel","noopener").style("cursor","pointer")
+        : grp;
+      lcContainer.append("rect")
+        .attr("x", bx).attr("y", by)
+        .attr("width", bw).attr("height", bh)
+        .attr("rx", 3).attr("ry", 3)
+        .attr("fill", "#1a1a2e")
+        .attr("stroke", col(d).light)
+        .attr("stroke-width", 1.5);
+      ["LSO","Certified"].forEach(function(word, i) {
+        lcContainer.append("text")
+          .attr("x", bx + bw / 2).attr("y", by + pad + lh * (i + 0.5))
+          .attr("text-anchor", "middle")
+          .attr("dominant-baseline", "central")
+          .attr("fill", col(d).light)
+          .attr("font-size", fs + "px")
+          .attr("font-weight", 400)
+          .attr("font-family", "'DM Sans', sans-serif")
+          .attr("letter-spacing", "0.3px")
+          .attr("pointer-events", "none")
+          .text(word);
+      });
+    });
+
+  // Staggered fade-in
+  nodeSel.transition().duration(600)
+    .delay((d, i) => 350 + i * 45)
+    .style("opacity", 1);
+
+  /* ─────────────────────────────────────────────
+     TICK
+  ───────────────────────────────────────────── */
+  sim.on("tick", () => {
+    linkSel.each(function(d) {
+      const dx   = d.target.x - d.source.x;
+      const dy   = d.target.y - d.source.y;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      const ux   = dx / dist, uy = dy / dist;
+      const rs   = radius(d.source), rt = radius(d.target);
+      // Edge contact points
+      const x1 = d.source.x + ux * rs, y1 = d.source.y + uy * rs;
+      const x2 = d.target.x - ux * rt, y2 = d.target.y - uy * rt;
+      d3.select(this).attr("d", `M${x1},${y1} L${x2},${y2}`);
+      // Position subtitle label at midpoint of hub-to-hub link
+      if (d._type === "hub") {
+        const mx = (d.source.x + d.target.x) / 2;
+        const my = (d.source.y + d.target.y) / 2;
+        hubLinkLabel.attr("x", mx).attr("y", my - 10);
+      }
+    });
+    nodeSel.attr("transform", d => `translate(${d.x},${d.y})`);
+  });
+
+  /* ─────────────────────────────────────────────
+     RESIZE
+  ───────────────────────────────────────────── */
+  window.addEventListener("resize", () => {
+    const W2 = window.innerWidth, H2 = window.innerHeight;
+    svg.attr("viewBox", [0, 0, W2, H2]);
+    sim.force("center", d3.forceCenter(W2 / 2, H2 / 2))
+       .alphaTarget(0.1).restart();
+    setTimeout(() => sim.alphaTarget(0), 500);
+  });
+
+  /* ─────────────────────────────────────────────
+     UTILITY
+  ───────────────────────────────────────────── */
+  function hexToRgba(hex, a) {
+    const r = parseInt(hex.slice(1,3),16);
+    const g = parseInt(hex.slice(3,5),16);
+    const b = parseInt(hex.slice(5,7),16);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  // ── Implementation Survey ────────────────────────────────────────────────
+  (async function() {
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxG0hoPlzmHYha6Sdoqka8TZKvJhwTQuVYglEhLWa0QathRTTauIksKSRKHOZbLFOAN_w/exec";
+    // Fetch form options via Sheets API
+    const tbody = document.getElementById("impl-tbody");
+    let formLabels = [];
+    try {
+      const formRows = await fetchSheet("2067951233");
+      formLabels = formRows.filter(r => r.label).map(r => r.label);
+    } catch(e) {
+      console.warn("Form fetch failed, using fallback:", e);
+      formLabels = [
+        "Address Validation & Site Query (v7.0.0-RC/v7.0.1)",
+        "Product Offering Qualification  (v7.0.0-RC/v7.0.1)",
+        "Quote (v8.0.1)",
+        "Product Order (v10.0.0)"
+      ];
+    }
+
+    // Build table rows — one row per label, with Buy/Sell checkboxes
+    formLabels.forEach(label => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="api-name">${label}</td>
+        <td class="ver-cell"><input type="checkbox" data-api="${label}" data-ver="${label}" data-side="buy" /></td>
+        <td class="ver-cell"><input type="checkbox" data-api="${label}" data-ver="${label}" data-side="sell" /></td>`;
+      tbody.appendChild(tr);
+    });
+
+    // Drawer open/close
+    const drawer  = document.getElementById("impl-drawer");
+    const overlay = document.getElementById("impl-overlay");
+    const btn     = document.getElementById("impl-btn");
+    const closeBtn= document.getElementById("impl-close");
+
+    function openDrawer()  { drawer.classList.add("active");  overlay.classList.add("active"); }
+    function closeDrawer() { drawer.classList.remove("active"); overlay.classList.remove("active"); }
+
+    btn.addEventListener("click", openDrawer);
+    closeBtn.addEventListener("click", closeDrawer);
+    overlay.addEventListener("click", closeDrawer);
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
+
+    // Form submission
+    document.getElementById("impl-submit").addEventListener("click", async () => {
+      const company  = document.getElementById("impl-company").value.trim();
+      const email    = document.getElementById("impl-email").value.trim();
+      const comments = document.getElementById("impl-comments").value.trim();
+      const msgEl    = document.getElementById("impl-msg");
+      const submitBtn= document.getElementById("impl-submit");
+
+      if (!company) { msgEl.className = "error"; msgEl.textContent = "Please enter your company name."; return; }
+      if (!email)   { msgEl.className = "error"; msgEl.textContent = "Please enter your contact email."; return; }
+
+      // Collect checked items
+      const selections = [];
+      document.querySelectorAll("#impl-tbody input[type=checkbox]:checked").forEach(cb => {
+        selections.push({ api: cb.dataset.api, version: cb.dataset.ver, side: cb.dataset.side });
+      });
+      if (!selections.length) { msgEl.className = "error"; msgEl.textContent = "Please select at least one API version."; return; }
+
+      submitBtn.disabled = true;
+      msgEl.className = ""; msgEl.textContent = "Submitting…";
+
+      try {
+        const payload = JSON.stringify({ company, email, comments, selections, timestamp: new Date().toISOString() });
+        const url = APPS_SCRIPT_URL + "?data=" + encodeURIComponent(payload);
+        await fetch(url, { method: "GET", mode: "no-cors" });
+      } catch(e) {
+        // no-cors fetch errors are expected — request still reaches Apps Script
+        console.log("Fetch note:", e);
+      }
+      // Show success regardless — no-cors prevents reading the response
+      msgEl.className = "success";
+      msgEl.textContent = "Thank you! Your implementation has been recorded.";
+      submitBtn.disabled = false;
+    });
+  })();
+
+  // Lightbox behaviour
+  (function() {
+    const lb    = document.getElementById("lightbox");
+    const img   = document.getElementById("lso-versions-img");
+    const close = document.getElementById("lightbox-close");
+    img.addEventListener("click",  () => lb.classList.add("active"));
+    lb.addEventListener("click",   () => lb.classList.remove("active"));
+    close.addEventListener("click", e => { e.stopPropagation(); lb.classList.remove("active"); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") lb.classList.remove("active"); });
+  })();
+
+  // Set info box email via JS to prevent Cloudflare obfuscation
+  (function() {
+    var u = "info", d = "mplify.net";
+    var a = document.getElementById("info-email");
+    if (a) { a.href = "mailto:" + u + "@" + d; a.textContent = u + "@" + d; }
+  })();
+
+  })(); // end async IIFE
+  </script>
+</body>
+</html>
