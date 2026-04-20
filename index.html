@@ -489,7 +489,7 @@
     <div style="font-size:13px;color:var(--muted);letter-spacing:0.3px;margin-bottom:2px;">Select infographic to display from the dropdown</div>
     <select id="api-select"><option>Loading APIs…</option></select>
     <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
-      <img id="lso-versions-img" src="https://danielmef.github.io/sandbox-lso-apis/LSO_Versions_and_Releases.png"
+      <img id="lso-versions-img" src="https://mplify-products.github.io/sandbox-lso-apis/LSO_Versions_and_Releases.png"
            alt="LSO Versions and Releases" title="LSO Versions and Releases" />
       <span style="font-size:10px;color:var(--muted);text-align:center;max-width:120px;line-height:1.4;">Click on preview to see LSO APIs, releases and versions</span>
     </div>
@@ -497,7 +497,7 @@
   <!-- Lightbox -->
   <div id="lightbox">
     <span id="lightbox-close">&times;</span>
-    <img src="https://danielmef.github.io/sandbox-lso-apis/LSO_Versions_and_Releases.png" alt="LSO Versions and Releases" />
+    <img src="https://mplify-products.github.io/sandbox-lso-apis/LSO_Versions_and_Releases.png" alt="LSO Versions and Releases" />
   </div>
   <!-- Implementation Survey Button -->
   <button id="impl-btn">&#10010; Share my API status</button>
@@ -795,9 +795,8 @@ hub-buy,hub-sell`;
   // Reveal title and subtitle now that correct text is set
   titleEl.style.visibility    = "visible";
   subtitleEl.style.visibility = "visible";
-  // Store short API label for hub link (use sheet/apiCol name, not full subtitle)
-  const selectedApiForLabel = apiConfig.find(r => r.links_gid === linksGid);
-  window._subtitleText = selectedApiForLabel ? (selectedApiForLabel.sheet || selectedApiForLabel.label || "") : "";
+  // Hub link label left blank — subtitle already shown in header
+  window._subtitleText = "";
 
   // Populate company rosters
   (function() {
@@ -1360,7 +1359,7 @@ hub-buy,hub-sell`;
         .attr("stroke-width", 1.5);
       // Mplify logo image
       a.append("image")
-        .attr("href", "https://danielmef.github.io/sandbox-lso-apis/Mplify-logo.png")
+        .attr("href", "https://mplify-products.github.io/sandbox-lso-apis/Mplify-logo.png")
         .attr("x", bx + pad).attr("y", by + pad)
         .attr("width", bw - pad * 2).attr("height", bh - pad * 2)
         .attr("preserveAspectRatio", "xMidYMid meet");
