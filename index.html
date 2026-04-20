@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>LSO API Partners</title>
+  <title>LSO API Partners - Sandbox</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -489,7 +489,7 @@
     <div style="font-size:13px;color:var(--muted);letter-spacing:0.3px;margin-bottom:2px;">Select infographic to display from the dropdown</div>
     <select id="api-select"><option>Loading APIs…</option></select>
     <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
-      <img id="lso-versions-img" src="https://mplify-products.github.io/lso-apis/LSO_Versions_and_Releases.png"
+      <img id="lso-versions-img" src="https://danielmef.github.io/sandbox-lso-apis/LSO_Versions_and_Releases.png"
            alt="LSO Versions and Releases" title="LSO Versions and Releases" />
       <span style="font-size:10px;color:var(--muted);text-align:center;max-width:120px;line-height:1.4;">Click on preview to see LSO APIs, releases and versions</span>
     </div>
@@ -497,7 +497,7 @@
   <!-- Lightbox -->
   <div id="lightbox">
     <span id="lightbox-close">&times;</span>
-    <img src="https://mplify-products.github.io/lso-apis/LSO_Versions_and_Releases.png" alt="LSO Versions and Releases" />
+    <img src="https://danielmef.github.io/sandbox-lso-apis/LSO_Versions_and_Releases.png" alt="LSO Versions and Releases" />
   </div>
   <!-- Implementation Survey Button -->
   <button id="impl-btn">&#10010; Share my API status</button>
@@ -573,41 +573,18 @@
   // ── URL parameter support ──────────────────────────────────────────
   // Use ?nodes=GID&links=GID in the browser URL to switch data sources
   // Example: index.html?nodes=111111&links=222222
-  // Google Sheets API v4 — key restricted to mplify-products.github.io
-  const SHEET_ID   = "1Bu8u4j3JKJ_7K9rN7XNB2q1bs9FJv6tbQK_O31Hr9so";
-  const API_KEY    = "AIzaSyBO2A-xcrPpcj9g0ebdlnDlx1AjvP90xzQ";
-  const API_BASE   = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values`;
+  // Sandbox — published CSV, no API key required
+  // Sandbox — uses published CSV (no API key required)
+  const BASE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS-vSGEUpW5SNzFOrygA9_3N9iNI1A3SF5CUOKXZTGI3pY_o2ae6oVkr6PTfJgido8Fvia7CYyFqeP2/pub?single=true&output=csv";
   const DEFAULT_LINKS_GID = "1881293424";
 
-  // Map GID → sheet name for Sheets API
-  const GID_TO_NAME = {
-    "399938948":  "menu",
-    "1901457844": "meta-nodes",
-    "1881293424": "lso.av2.links",
-    "1279159249": "lso.poq2.links",
-    "2008560393": "lso.q4.links",
-    "930832971":  "lso.po5.links",
-    "2067951233": "form",
-    "1595771123": "badges",
-    "1595771123": "badges",
-  };
-
-  // Fetch a sheet by GID and return CSV-like parsed array of objects
+  // Fetch a sheet by GID from published CSV
   async function fetchSheet(gid) {
-    const name = GID_TO_NAME[gid];
-    if (!name) throw new Error("Unknown GID: " + gid);
-    const url = `${API_BASE}/${encodeURIComponent(name)}?key=${API_KEY}`;
+    const url = BASE_URL + "&gid=" + gid + "&t=" + Date.now();
     const resp = await fetch(url);
     if (!resp.ok) throw new Error("HTTP " + resp.status);
-    const json = await resp.json();
-    const rows = json.values || [];
-    if (rows.length < 2) return [];
-    const headers = rows[0].map(h => h.trim());
-    return rows.slice(1).map(row => {
-      const obj = {};
-      headers.forEach((h, i) => obj[h] = row[i] || "");
-      return obj;
-    });
+    const csv = await resp.text();
+    return d3.csvParse(csv);
   }
 
   // Convert array of objects to CSV string (for d3.csvParse compatibility)
@@ -619,8 +596,8 @@
     return lines.join("\n");
   }
 
-  const CONFIG_GID      = "399938948";
-  const META_NODES_GID  = "1901457844";
+  const CONFIG_GID     = "399938948";
+  const META_NODES_GID = "1901457844";
 
   // Map links_gid → meta-nodes column header
   const LINKS_GID_TO_COL = {
@@ -628,6 +605,7 @@
     "1279159249": "lso.poq2",
     "2008560393": "lso.q4",
     "930832971":  "lso.po5",
+    "1871851720": "non-lso",
   };
 
   // Fetch config tab and populate dropdown
@@ -1381,7 +1359,7 @@ hub-buy,hub-sell`;
         .attr("stroke-width", 1.5);
       // Mplify logo image
       a.append("image")
-        .attr("href", "https://mplify-products.github.io/lso-apis/Mplify-logo.png")
+        .attr("href", "https://danielmef.github.io/sandbox-lso-apis/Mplify-logo.png")
         .attr("x", bx + pad).attr("y", by + pad)
         .attr("width", bw - pad * 2).attr("height", bh - pad * 2)
         .attr("preserveAspectRatio", "xMidYMid meet");
