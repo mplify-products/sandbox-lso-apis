@@ -1748,7 +1748,7 @@ hub-buy,hub-sell`;
 
     const rWrap = document.getElementById("roster-wrap");
     function openRoster()  { rDrawer.classList.add("active"); rOverlay.classList.add("active"); rWrap.classList.add("visible"); }
-    function closeRoster() { rDrawer.classList.remove("active"); rOverlay.classList.remove("active"); }
+    function closeRoster() { rDrawer.classList.remove("active"); rOverlay.classList.remove("active"); rWrap.classList.remove("visible"); }
 
     rBtn.addEventListener("click", openRoster);
     rClose.addEventListener("click", closeRoster);
