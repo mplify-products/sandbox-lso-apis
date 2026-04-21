@@ -48,16 +48,22 @@
     }
     @keyframes blobFade { to { opacity: .55; } }
 
-    /* Info frame — wraps title, subtitle, stats and legend */
-    #info-frame {
+    /* Left panel — single flex column, all elements stack naturally */
+    #left-panel {
       position: fixed; top: 110px; left: 32px;
       z-index: 10;
+      display: flex; flex-direction: column; gap: 12px;
+      width: 338px;
+      opacity: 0; animation: slideDown .7s ease .2s forwards;
+    }
+
+    /* Info frame — wraps title, subtitle, stats and legend */
+    #info-frame {
       border: 1px solid rgba(255,255,255,0.55);
       border-radius: 10px;
       padding: 16px 24px 14px;
       backdrop-filter: blur(4px);
       background: rgba(4,9,26,0.35);
-      opacity: 0; animation: slideDown .7s ease .2s forwards;
       pointer-events: none;
     }
 
@@ -126,9 +132,17 @@
       opacity: 0; animation: slideUp .7s ease 1s forwards;
     }
 
+    /* Buttons wrap */
+    #buttons-wrap {
+      position: fixed; left: 32px;
+      width: 338px;
+      z-index: 10;
+      display: flex; flex-direction: column; gap: 10px;
+      opacity: 0; animation: slideDown .7s ease 1.4s forwards;
+    }
+
     /* Implementation Form */
     #impl-btn {
-      position: fixed; top: 726px; left: 32px;
       z-index: 10;
       background: linear-gradient(135deg, #3D7BC7, #2a5da0);
       color: #fff;
@@ -149,8 +163,6 @@
     }
     /* LSO Versions button */
     #lso-versions-btn {
-      position: fixed; top: 766px; left: 32px;
-      z-index: 10;
       background: linear-gradient(135deg, #5a3d8a, #3d2060);
       color: #fff;
       border: none; border-radius: 20px;
@@ -225,8 +237,6 @@
 
     /* Roster drawer button */
     #roster-btn {
-      position: fixed; top: 686px; left: 32px;
-      z-index: 10;
       background: linear-gradient(135deg, #1a6644, #144d33);
       color: #fff;
       border: none; border-radius: 20px;
@@ -422,10 +432,7 @@
 
     /* API Dropdown */
     #api-dropdown-wrap {
-      position: fixed; top: 285px; left: 32px;
-      z-index: 10;
       display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
-      opacity: 0; animation: slideDown .7s ease .6s forwards;
     }
     #lso-thumbnail-wrap { display: none; }
     #lso-thumbnail-wrap.visible { display: block; animation: slideDown .4s ease forwards; }
@@ -466,10 +473,7 @@
 
     /* API Map panel */
     #api-map-wrap {
-      position: fixed; top: 532px; left: 32px;
-      width: 338px;
-      z-index: 10;
-      opacity: 0; animation: slideDown .7s ease 1.3s forwards;
+      width: 100%;
     }
     #api-map-wrap .map-label {
       font-size: 10px; color: var(--muted);
@@ -543,8 +547,7 @@
 
     /* Info box */
     #info-box {
-      position: fixed; top: 423px; left: 32px;
-      width: 338px;
+      width: 100%;
       background: rgba(232,237,245,0.95);
       border: 1px solid rgba(255,255,255,0.4);
       border-radius: 8px;
@@ -561,8 +564,6 @@
 
     /* Zoom slider */
     #zoom-wrap {
-      position: fixed; top: 355px; left: 32px;
-      z-index: 10;
       width: 210px;
       background: rgba(10,18,40,0.85);
       border: 1px solid rgba(255,255,255,0.12);
@@ -687,41 +688,60 @@
 </head>
 <body>
 
-  <div id="info-frame">
-    <div id="header">
-      <div id="title" style="visibility:hidden">Interoperable LSO Partners - Illustration</div>
-      <div id="subtitle" style="visibility:hidden">LSO Address Validation API release 2 (lso.av.2)</div>
-    </div>
-    <div id="stats"></div>
-    <div id="legend"></div>
-  </div>
-  <div id="zoom-wrap">
-    <div class="zoom-title">Infographic zoom</div>
-    <div class="zoom-row">
-      <label style="font-size:11px;color:var(--muted)">&#128269;</label>
-      <input id="zoom-slider" type="range" min="0.2" max="3" step="0.05" value="0.5" />
-      <span id="zoom-label">50%</span>
-    </div>
-  </div>
   <div id="hint">Drag · Scroll to zoom · Click pinned node to release</div>
 
   <div id="logo">
     <img src="Mplify-logo.png" alt="Mplify Alliance" />
   </div>
-  <div id="api-dropdown-wrap">
-    <div style="font-size:13px;color:var(--muted);letter-spacing:0.3px;margin-bottom:2px;">Select infographic to display from the dropdown</div>
-    <select id="api-select"><option>Loading APIs…</option></select>
-    <div id="lso-thumbnail-wrap">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
-        <img id="lso-versions-img" src="https://mplify-products.github.io/lso-apis/LSO_Versions_and_Releases.png"
-             alt="LSO Versions and Releases" title="LSO Versions and Releases" />
+
+  <!-- Left panel: all stacking elements in one flex column -->
+  <div id="left-panel">
+    <div id="info-frame">
+      <div id="header">
+        <div id="title" style="visibility:hidden">Interoperable LSO Partners - Illustration</div>
+        <div id="subtitle" style="visibility:hidden">LSO Address Validation API release 2 (lso.av.2)</div>
+      </div>
+      <div id="stats"></div>
+      <div id="legend"></div>
+    </div>
+    <div id="api-dropdown-wrap">
+      <div style="font-size:13px;color:var(--muted);letter-spacing:0.3px;margin-bottom:2px;">Select infographic to display from the dropdown</div>
+      <select id="api-select"><option>Loading APIs…</option></select>
+      <div id="lso-thumbnail-wrap">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          <img id="lso-versions-img" src="https://mplify-products.github.io/lso-apis/LSO_Versions_and_Releases.png"
+               alt="LSO Versions and Releases" title="LSO Versions and Releases" />
+        </div>
       </div>
     </div>
+    <div id="zoom-wrap">
+      <div class="zoom-title">Infographic zoom</div>
+      <div class="zoom-row">
+        <label style="font-size:11px;color:var(--muted)">&#128269;</label>
+        <input id="zoom-slider" type="range" min="0.2" max="3" step="0.05" value="0.5" />
+        <span id="zoom-label">50%</span>
+      </div>
+    </div>
+    <!-- API Map with hotspots -->
+    <div id="api-map-wrap">
+      <div class="map-label">LSO Business &amp; Operational APIs</div>
+      <div id="api-map-container">
+        <img src="LSO Business and Operational APIs.png" alt="LSO Business and Operational APIs" />
+        <div class="hotspot" style="left:8%;top:35%;" id="hotspot-av" title="Address Validation &amp; Site Query">
+          <div class="hotspot-ring"></div>
+          <div class="hotspot-tooltip">Address Validation &amp; Site Query</div>
+        </div>
+      </div>
+    </div>
+    <div id="info-box">This infographic shows the automation interoperability between companies on the buy and sell side based on the selected item in the dropdown. The data is continuously being updated. If you want to update your company&#39;s API status or add new API status data, please fill in the form below by clicking the &#39;+Share my API status&#39; button. For more information, please contact <a id="info-email" href="#"></a></div>
+  </div><!-- end left-panel -->
+
+  <!-- Buttons wrap -->
+  <div id="buttons-wrap">
+    <button id="roster-btn">&#9776; View Partners</button>
+    <button id="impl-btn">&#10010; Share my API status</button>
+    <button id="lso-versions-btn">&#128196; Show LSO API versions</button>
   </div>
-  <!-- Implementation Survey Button -->
-  <button id="impl-btn">&#10010; Share my API status</button>
-  <!-- LSO Versions Button -->
-  <button id="lso-versions-btn">&#128196; Show LSO API versions</button>
 
   <!-- LSO Versions Bottom Drawer -->
   <div id="lso-versions-drawer">
@@ -734,9 +754,6 @@
            alt="LSO Versions and Releases" />
     </div>
   </div>
-  <!-- Roster Drawer Button -->
-  <button id="roster-btn">&#9776; View Partners</button>
-
   <!-- Roster Bottom Drawer -->
   <div id="roster-drawer">
     <span class="close-btn" id="roster-close">&times;</span>
@@ -805,20 +822,6 @@
     </div>
   </div>
   <div id="debug-bar"></div>
-  <!-- API Map with hotspots -->
-  <div id="api-map-wrap">
-    <div class="map-label">LSO Business &amp; Operational APIs</div>
-    <div id="api-map-container">
-      <img src="LSO Business and Operational APIs.png" alt="LSO Business and Operational APIs" />
-      <!-- Hotspot: Address Validation & Site Query (~8% x, ~35% y) -->
-      <div class="hotspot" style="left:8%;top:35%;" id="hotspot-av" title="Address Validation &amp; Site Query">
-        <div class="hotspot-ring"></div>
-        <div class="hotspot-tooltip">Address Validation &amp; Site Query</div>
-      </div>
-    </div>
-  </div>
-
-  <div id="info-box">This infographic shows the automation interoperability between companies on the buy and sell side based on the selected item in the dropdown. The data is continuously being updated. If you want to update your company's API status or add new API status data, please fill in the form below by clicking the '+Share my API status' button. For more information, please contact <a id="info-email" href="#"></a></div>
   <svg id="graph"></svg>
   <div id="tooltip">
     <div class="tip-name"></div>
@@ -1815,6 +1818,20 @@ hub-buy,hub-sell`;
       url.searchParams.set("links", AV_GID);
       url.searchParams.delete("nodes");
       window.location.href = url.toString();
+    });
+  })();
+
+  // Position buttons-wrap directly below left-panel
+  (function positionButtons() {
+    const panel = document.getElementById("left-panel");
+    const wrap  = document.getElementById("buttons-wrap");
+    if (!panel || !wrap) return;
+    const rect = panel.getBoundingClientRect();
+    wrap.style.top = (rect.bottom + 12) + "px";
+    // Re-check after fonts/images load in case height changes
+    window.addEventListener("load", () => {
+      const r = panel.getBoundingClientRect();
+      wrap.style.top = (r.bottom + 12) + "px";
     });
   })();
 
