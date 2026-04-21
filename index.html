@@ -48,22 +48,30 @@
     }
     @keyframes blobFade { to { opacity: .55; } }
 
-    /* Header */
+    /* Info frame — wraps title, subtitle, stats and legend */
+    #info-frame {
+      position: fixed; top: 20px; left: 130px;
+      z-index: 10;
+      border: 1px solid rgba(255,255,255,0.55);
+      border-radius: 10px;
+      padding: 16px 24px 14px;
+      backdrop-filter: blur(4px);
+      background: rgba(4,9,26,0.35);
+      opacity: 0; animation: slideDown .7s ease .2s forwards;
+      pointer-events: none;
+    }
+
     #header {
-      position: fixed; top: 0; left: 130px; right: 0;
-      padding: 27px 32px 0;
-      z-index: 10; pointer-events: none;
+      pointer-events: none;
     }
     #title {
       font-family: 'Barlow Condensed', sans-serif;
       font-size: 26px; font-weight: 700;
       letter-spacing: 1.5px; text-transform: uppercase;
-      opacity: 0; animation: slideDown .7s ease .2s forwards;
     }
     #subtitle {
       margin-top: 5px; font-size: 26px;
       color: var(--muted); letter-spacing: .4px;
-      opacity: 0; animation: slideDown .7s ease .4s forwards;
     }
     @keyframes slideDown {
       from { opacity:0; transform:translateY(-10px); }
@@ -72,10 +80,8 @@
 
     /* Stats */
     #stats {
-      position: fixed; top: 105px; left: 162px;
       display: flex; gap: 28px;
-      z-index: 10;
-      opacity: 0; animation: slideDown .7s ease .5s forwards;
+      margin-top: 10px;
     }
     .stat { text-align: left; }
     .stat-num {
@@ -86,10 +92,8 @@
 
     /* Legend */
     #legend {
-      position: fixed; top: 185px; left: 130px;
       display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
-      z-index: 10;
-      opacity: 0; animation: slideDown .7s ease .9s forwards;
+      margin-top: 10px;
     }
     @keyframes slideUp {
       from { opacity:0; transform:translateY(10px); }
@@ -604,13 +608,14 @@
 </head>
 <body>
 
-  <div id="header">
-    <div id="title" style="visibility:hidden">Interoperable LSO Partners - Illustration</div>
-    <div id="subtitle" style="visibility:hidden">LSO Address Validation API release 2 (lso.av.2)</div>
+  <div id="info-frame">
+    <div id="header">
+      <div id="title" style="visibility:hidden">Interoperable LSO Partners - Illustration</div>
+      <div id="subtitle" style="visibility:hidden">LSO Address Validation API release 2 (lso.av.2)</div>
+    </div>
+    <div id="stats"></div>
+    <div id="legend"></div>
   </div>
-
-  <div id="stats"></div>
-  <div id="legend"></div>
   <div id="zoom-wrap">
     <div class="zoom-title">Infographic zoom</div>
     <div class="zoom-row">
