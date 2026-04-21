@@ -218,8 +218,8 @@
     }
     /* Roster bottom drawer */
     #roster-drawer {
-      position: fixed; bottom: -420px; left: 0; right: 0;
-      height: 400px;
+      position: fixed; bottom: -75vh; left: 0; right: 0;
+      height: 75vh;
       background: #070F28;
       border-top: 1px solid rgba(255,255,255,0.1);
       z-index: 51; overflow: hidden;
@@ -243,9 +243,10 @@
     #roster-drawer .close-btn:hover { color: #fff; }
     #roster-columns {
       display: flex; gap: 24px; flex: 1; overflow: hidden;
+      max-width: 600px;
     }
     .roster-col {
-      flex: 1; display: flex; flex-direction: column;
+      flex: 1; display: flex; flex-direction: column; max-width: 280px;
     }
     .roster-col h3 {
       font-family: 'Barlow Condensed', sans-serif;
