@@ -663,7 +663,7 @@
   <!-- Roster Bottom Drawer -->
   <div id="roster-drawer">
     <span class="close-btn" id="roster-close">&times;</span>
-    <h2>Partner Companies</h2>
+    <h2 id="roster-drawer-title">Partner Companies</h2>
     <div id="roster-columns">
       <div class="roster-col">
         <h3 class="buy">Buy Side</h3>
@@ -997,6 +997,12 @@ hub-buy,hub-sell`;
   // Reveal title and subtitle now that correct text is set
   titleEl.style.visibility    = "visible";
   subtitleEl.style.visibility = "visible";
+  // Set roster drawer title to match infographic title
+  const rosterDrawerTitle = document.getElementById("roster-drawer-title");
+  if (rosterDrawerTitle) {
+    const infographicTitle = titleEl.textContent || "Infographic";
+    rosterDrawerTitle.textContent = "INTEROPERABLE PARTNERS — " + infographicTitle;
+  }
   // Store subtitle text so hubLinkLabel can pick it up once defined
   window._subtitleText = subtitleEl.textContent;
 
