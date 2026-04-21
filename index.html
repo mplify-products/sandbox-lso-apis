@@ -166,34 +166,59 @@
       transform: scale(1.04);
       box-shadow: 0 6px 24px rgba(90,61,138,0.6);
     }
-    /* LSO Versions left drawer */
+    /* LSO Versions bottom drawer */
     #lso-versions-drawer {
-      position: fixed; top: 0; left: -520px; width: 500px; height: 100%;
+      position: fixed; bottom: -75vh; left: 0; right: 0;
+      height: 75vh;
       background: #070F28;
-      border-right: 1px solid rgba(255,255,255,0.1);
+      border-top: 1px solid rgba(255,255,255,0.1);
       z-index: 51; overflow-y: auto;
-      transition: left .35s ease;
-      padding: 28px 28px 40px;
-      display: flex; flex-direction: column; align-items: center;
+      transition: bottom .35s ease;
+      padding: 28px 32px 40px;
+      display: flex; flex-direction: column;
     }
-    #lso-versions-drawer.active { left: 0; }
+    #lso-versions-drawer.active { bottom: 0; }
     #lso-versions-drawer h2 {
       font-family: 'Barlow Condensed', sans-serif;
       font-size: 20px; font-weight: 700;
       text-transform: uppercase; letter-spacing: 1px;
-      color: #fff; margin-bottom: 16px; width: 100%;
+      color: #fff; margin-bottom: 8px; flex-shrink: 0;
+    }
+    #lso-versions-drawer .drawer-desc {
+      font-size: 13px; color: var(--muted);
+      margin-bottom: 16px; flex-shrink: 0;
     }
     #lso-versions-drawer .close-btn {
-      position: absolute; top: 20px; right: 22px;
+      position: absolute; top: 20px; right: 28px;
       font-size: 26px; color: var(--muted);
       cursor: pointer; line-height: 1;
       transition: color .15s;
     }
     #lso-versions-drawer .close-btn:hover { color: #fff; }
+    #lso-versions-drawer .img-wrap {
+      flex: 1; overflow: hidden;
+      display: flex; flex-direction: column; gap: 14px;
+    }
     #lso-versions-drawer img {
-      width: 100%; height: auto;
+      width: 100%; height: 100%;
+      object-fit: contain; object-position: top left;
       border-radius: 6px;
       box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    }
+    #lso-versions-drawer .open-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      align-self: flex-start;
+      padding: 7px 16px;
+      background: rgba(61,123,199,0.15);
+      border: 1px solid rgba(61,123,199,0.4);
+      border-radius: 20px;
+      color: #7AAEE0; font-size: 12px; font-weight: 600;
+      text-decoration: none; flex-shrink: 0;
+      transition: background .15s, border-color .15s;
+    }
+    #lso-versions-drawer .open-link:hover {
+      background: rgba(61,123,199,0.28);
+      border-color: rgba(61,123,199,0.7);
     }
 
     /* Roster drawer button */
@@ -413,34 +438,7 @@
       transform: scale(1.02);
       box-shadow: 0 2px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.4);
     }
-    /* Lightbox */
-    #lightbox {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.88);
-      z-index: 100;
-      justify-content: center;
-      align-items: center;
-      cursor: zoom-out;
-      backdrop-filter: blur(4px);
-      animation: fadeIn .2s ease;
-    }
-    #lightbox.active { display: flex; }
-    #lightbox img {
-      max-width: 92vw; max-height: 88vh;
-      border-radius: 6px;
-      box-shadow: 0 8px 48px rgba(0,0,0,0.7);
-      pointer-events: none;
-    }
-    #lightbox-close {
-      position: fixed; top: 20px; right: 28px;
-      color: rgba(255,255,255,0.7);
-      font-size: 36px; line-height: 1;
-      cursor: pointer;
-      z-index: 101;
-      transition: color .15s;
-    }
-    #lightbox-close:hover { color: #fff; }
+
     @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
     #api-select {
       background: rgba(10,18,40,0.85);
@@ -640,22 +638,21 @@
       </div>
     </div>
   </div>
-  <!-- Lightbox -->
-  <div id="lightbox">
-    <span id="lightbox-close">&times;</span>
-    <img src="https://mplify-products.github.io/lso-apis/LSO_Versions_and_Releases.png" alt="LSO Versions and Releases" />
-  </div>
   <!-- Implementation Survey Button -->
   <button id="impl-btn">&#10010; Share my API status</button>
   <!-- LSO Versions Button -->
   <button id="lso-versions-btn">&#128196; Show LSO API versions</button>
 
-  <!-- LSO Versions Left Drawer -->
+  <!-- LSO Versions Bottom Drawer -->
   <div id="lso-versions-drawer">
     <span class="close-btn" id="lso-versions-close">&times;</span>
     <h2>LSO API Versions &amp; Releases</h2>
-    <img src="https://mplify-products.github.io/lso-apis/LSO_Versions_and_Releases.png"
-         alt="LSO Versions and Releases" />
+    <p class="drawer-desc">LSO API versions define the release lifecycle across all Mplify product families.</p>
+    <div class="img-wrap">
+      <a class="open-link" href="https://mplify-products.github.io/lso-apis/LSO_Versions_and_Releases.png" target="_blank" rel="noopener">Open full image ↗</a>
+      <img src="https://mplify-products.github.io/lso-apis/LSO_Versions_and_Releases.png"
+           alt="LSO Versions and Releases" />
+    </div>
   </div>
   <!-- Roster Drawer Button -->
   <button id="roster-btn">&#9776; View Partners</button>
@@ -1717,17 +1714,6 @@ hub-buy,hub-sell`;
     });
   })();
 
-  // Lightbox behaviour
-  (function() {
-    const lb    = document.getElementById("lightbox");
-    const img   = document.getElementById("lso-versions-img");
-    const close = document.getElementById("lightbox-close");
-    img.addEventListener("click",  () => lb.classList.add("active"));
-    lb.addEventListener("click",   () => lb.classList.remove("active"));
-    close.addEventListener("click", e => { e.stopPropagation(); lb.classList.remove("active"); });
-    document.addEventListener("keydown", e => { if (e.key === "Escape") lb.classList.remove("active"); });
-  })();
-
   // Set info box email via JS to prevent Cloudflare obfuscation
   (function() {
     var u = "info", d = "mplify.net";
@@ -1742,13 +1728,13 @@ hub-buy,hub-sell`;
     const vBtn     = document.getElementById("lso-versions-btn");
     const vClose   = document.getElementById("lso-versions-close");
 
-    const tWrap = document.getElementById("lso-thumbnail-wrap");
-    function openVersions()  { vDrawer.classList.add("active"); vOverlay.classList.add("active"); tWrap.classList.add("visible"); }
+    function openVersions()  { vDrawer.classList.add("active"); vOverlay.classList.add("active"); }
     function closeVersions() { vDrawer.classList.remove("active"); vOverlay.classList.remove("active"); }
 
     vBtn.addEventListener("click", openVersions);
     vClose.addEventListener("click", closeVersions);
     vOverlay.addEventListener("click", closeVersions);
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeVersions(); });
   })();
 
   // ── Roster Drawer ────────────────────────────────────────────────────────
