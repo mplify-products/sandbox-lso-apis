@@ -141,6 +141,65 @@
       opacity: 0; animation: slideDown .7s ease 1.4s forwards;
     }
 
+    /* Off-screen content hint — appears only when buttons/content below the fold */
+    #offscreen-hint {
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%) translateY(8px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: rgba(8, 15, 36, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 999px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: #E8EDF5;
+      letter-spacing: 0.2px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .35s ease, transform .35s ease;
+    }
+    #offscreen-hint.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    #offscreen-hint .hint-icon {
+      display: inline-flex;
+      width: 16px; height: 16px;
+      align-items: center; justify-content: center;
+      color: #FFB347;
+      animation: hintBob 1.8s ease-in-out infinite;
+    }
+    #offscreen-hint .hint-icon svg { width: 100%; height: 100%; }
+    @keyframes hintBob {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(3px); }
+    }
+    #offscreen-hint .hint-divider {
+      width: 1px; height: 12px;
+      background: rgba(255, 255, 255, 0.18);
+      margin: 0 2px;
+    }
+    #offscreen-hint kbd {
+      display: inline-block;
+      padding: 1px 5px;
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 3px;
+      color: #E8EDF5;
+    }
+
     /* Implementation Form */
     #impl-btn {
       z-index: 10;
@@ -745,6 +804,16 @@
     <button id="roster-btn">&#9776; View Partners</button>
     <button id="impl-btn">&#10010; Share my API status</button>
     <button id="lso-versions-btn">&#128196; Show LSO API versions</button>
+  </div>
+
+  <!-- Off-screen content hint (shown only when buttons/content fall below viewport) -->
+  <div id="offscreen-hint" role="status" aria-live="polite">
+    <span class="hint-icon" aria-hidden="true">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 3 v9 M4 9 l4 4 4-4"/>
+      </svg>
+    </span>
+    <span id="offscreen-hint-text">More content below — scroll down</span>
   </div>
 
   <!-- LSO Versions Bottom Drawer -->
@@ -1829,6 +1898,106 @@ hub-buy,hub-sell`;
       const r = panel.getBoundingClientRect();
       wrap.style.top = (r.bottom + 12) + "px";
     });
+  })();
+
+  // ── Off-screen content hint ──────────────────────────────────────────────
+  // Show a small hint when the bottom of the content (buttons-wrap) falls
+  // below the viewport, distinguishing between "page is scrollable" (scroll)
+  // and "browser is zoomed in" (reduce zoom) — or both.
+  (function offscreenHint() {
+    const hint   = document.getElementById("offscreen-hint");
+    const text   = document.getElementById("offscreen-hint-text");
+    const wrap   = document.getElementById("buttons-wrap");
+    const panel  = document.getElementById("left-panel");
+    if (!hint || !text || !wrap || !panel) return;
+
+    // Threshold below which we still consider content "fully visible"
+    const MARGIN = 8;
+
+    function estimateZoomPct() {
+      // devicePixelRatio works well in Chromium/Edge for user zoom.
+      // We compare against the *system* DPR captured at load (which may itself
+      // already reflect HiDPI). The ratio above 1.0 indicates user zoom-in.
+      // Fallback: outerWidth/innerWidth on browsers where that's reliable.
+      const dpr = window.devicePixelRatio || 1;
+      // Heuristic: anything ≥ ~1.1 of the baseline DPR is "zoomed in".
+      // We treat the page as zoomed if dpr is meaningfully > 1 AND innerWidth
+      // is smaller than what we'd expect for a normal desktop layout.
+      return dpr;
+    }
+
+    function update() {
+      // Find the lowest visible content edge we care about
+      const wrapRect = wrap.getBoundingClientRect();
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+
+      const buttonsBottom = wrapRect.bottom;
+      const offscreenBy   = buttonsBottom - vh;
+      const isOffscreen   = offscreenBy > MARGIN;
+
+      if (!isOffscreen) {
+        hint.classList.remove("visible");
+        return;
+      }
+
+      // Decide what advice to give.
+      // - "scroll": the document is taller than the viewport (scrolling works)
+      // - "zoom":   the browser is zoomed in (devicePixelRatio > ~1.1 baseline)
+      const docHeight   = Math.max(
+        document.documentElement.scrollHeight,
+        document.body ? document.body.scrollHeight : 0
+      );
+      const canScroll   = docHeight - vh > MARGIN;
+      const dpr         = estimateZoomPct();
+      // Most desktop displays sit at DPR 1 or 2 (retina). User zoom typically
+      // pushes DPR to fractional values like 1.1, 1.25, 1.5… Heuristic: treat
+      // a fractional DPR > 1.05 (and not very close to 2) as "zoomed in".
+      const fractional  = Math.abs(dpr - Math.round(dpr));
+      const isZoomed    = fractional > 0.05 || (dpr > 1 && dpr < 1.9 && dpr !== 1);
+
+      let msg;
+      if (canScroll && isZoomed) {
+        msg = 'More below — scroll down, or press <kbd>Ctrl</kbd>+<kbd>−</kbd> to zoom out';
+      } else if (canScroll) {
+        msg = 'More content below — scroll down ↓';
+      } else if (isZoomed) {
+        msg = 'Content hidden — press <kbd>Ctrl</kbd>+<kbd>−</kbd> to zoom out';
+      } else {
+        // Content extends past the viewport but the page isn't scrollable and
+        // we can't confidently detect zoom — suggest both options.
+        msg = 'More below — scroll down, or zoom out to see everything';
+      }
+      // Use platform-appropriate modifier key
+      if (navigator.platform && /Mac/i.test(navigator.platform)) {
+        msg = msg.replace(/Ctrl/g, '⌘');
+      }
+      text.innerHTML = msg;
+      hint.classList.add("visible");
+    }
+
+    // Initial check (after a tick so positioning script has run)
+    setTimeout(update, 50);
+    window.addEventListener("load",   update);
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, { passive: true });
+
+    // Catch zoom changes that don't fire resize on all browsers
+    if (window.matchMedia) {
+      const mq = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+      if (mq.addEventListener) {
+        mq.addEventListener("change", update);
+      } else if (mq.addListener) {
+        mq.addListener(update);
+      }
+    }
+
+    // Hide hint once user has scrolled near the bottom
+    window.addEventListener("scroll", () => {
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      const scrolledToBottom =
+        window.scrollY + vh >= document.documentElement.scrollHeight - MARGIN;
+      if (scrolledToBottom) hint.classList.remove("visible");
+    }, { passive: true });
   })();
 
   // Set info box email via JS to prevent Cloudflare obfuscation
