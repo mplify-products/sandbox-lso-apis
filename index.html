@@ -27,6 +27,31 @@
     html { overflow-x: hidden; overflow-y: auto; }
     body { overflow-x: hidden; }
 
+    /* Visible custom scrollbar so users notice scrollability
+       (macOS hides overlay scrollbars by default) */
+    html::-webkit-scrollbar {
+      width: 12px;
+    }
+    html::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    html::-webkit-scrollbar-thumb {
+      background: rgba(255, 179, 71, 0.35);
+      border-radius: 6px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+    }
+    html::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 179, 71, 0.6);
+      background-clip: padding-box;
+      border: 2px solid transparent;
+    }
+    /* Firefox */
+    html {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 179, 71, 0.45) rgba(255, 255, 255, 0.03);
+    }
+
     body::before {
       content: '';
       position: fixed; inset: 0;
@@ -147,16 +172,15 @@
     /* Off-screen content hint — appears only when buttons/content below the fold */
     #offscreen-hint {
       position: fixed;
-      left: 50%;
-      bottom: 16px;
-      transform: translateX(-50%) translateY(8px);
+      right: 24px;
+      bottom: 24px;
       z-index: 9999;
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 14px;
-      background: rgba(8, 15, 36, 0.88);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 9px 14px;
+      background: rgba(8, 15, 36, 0.92);
+      border: 1px solid rgba(255, 179, 71, 0.4);
       border-radius: 999px;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -165,14 +189,19 @@
       font-weight: 500;
       color: #E8EDF5;
       letter-spacing: 0.2px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
       opacity: 0;
-      pointer-events: none;
-      transition: opacity .35s ease, transform .35s ease;
+      pointer-events: auto;
+      cursor: pointer;
+      transform: translateY(8px);
+      transition: opacity .35s ease, transform .35s ease, border-color .2s ease;
+    }
+    #offscreen-hint:hover {
+      border-color: rgba(255, 179, 71, 0.7);
     }
     #offscreen-hint.visible {
       opacity: 1;
-      transform: translateX(-50%) translateY(0);
+      transform: translateY(0);
     }
     #offscreen-hint .hint-icon {
       display: inline-flex;
@@ -1894,13 +1923,21 @@ hub-buy,hub-sell`;
     const panel = document.getElementById("left-panel");
     const wrap  = document.getElementById("buttons-wrap");
     if (!panel || !wrap) return;
-    const rect = panel.getBoundingClientRect();
-    wrap.style.top = (rect.bottom + 12) + "px";
-    // Re-check after fonts/images load in case height changes
-    window.addEventListener("load", () => {
+    function place() {
       const r = panel.getBoundingClientRect();
-      wrap.style.top = (r.bottom + 12) + "px";
-    });
+      // getBoundingClientRect is viewport-relative; add scroll offset for
+      // absolute positioning (which is document-relative).
+      const docTop = r.bottom + window.scrollY;
+      wrap.style.top = (docTop + 12) + "px";
+      // Ensure body extends past the buttons so scrolling can reveal them.
+      // Absolute-positioned elements don't contribute to parent scroll height.
+      const wrapHeight = wrap.offsetHeight || 160; // fallback if not yet rendered
+      const needed = docTop + 12 + wrapHeight + 24; // 24px breathing room
+      document.body.style.minHeight = needed + "px";
+    }
+    place();
+    window.addEventListener("load",   place);
+    window.addEventListener("resize", place);
   })();
 
   // ── Off-screen content hint ──────────────────────────────────────────────
@@ -1955,6 +1992,17 @@ hub-buy,hub-sell`;
     window.addEventListener("load",   update);
     window.addEventListener("resize", update);
     window.addEventListener("scroll", update, { passive: true });
+
+    // Click the hint to auto-scroll down to the buttons
+    hint.addEventListener("click", () => {
+      const wrapEl = document.getElementById("buttons-wrap");
+      if (!wrapEl) return;
+      const rect = wrapEl.getBoundingClientRect();
+      window.scrollTo({
+        top: window.scrollY + rect.bottom - window.innerHeight + 24,
+        behavior: "smooth"
+      });
+    });
 
     if (window.matchMedia) {
       const mq = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
