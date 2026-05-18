@@ -18,12 +18,14 @@
     }
 
     html, body {
-      width: 100%; height: 100%;
-      overflow: hidden;
+      width: 100%;
+      min-height: 100%;
       background: var(--bg);
       font-family: 'DM Sans', sans-serif;
       color: var(--text);
     }
+    html { overflow-x: hidden; overflow-y: auto; }
+    body { overflow-x: hidden; }
 
     body::before {
       content: '';
@@ -134,11 +136,12 @@
 
     /* Buttons wrap */
     #buttons-wrap {
-      position: fixed; left: 32px;
+      position: absolute; left: 32px;
       width: 338px;
       z-index: 10;
       display: flex; flex-direction: column; gap: 10px;
       opacity: 0; animation: slideDown .7s ease 1.4s forwards;
+      padding-bottom: 20px;
     }
 
     /* Off-screen content hint — appears only when buttons/content below the fold */
@@ -1902,8 +1905,9 @@ hub-buy,hub-sell`;
 
   // ── Off-screen content hint ──────────────────────────────────────────────
   // Show a small hint when the bottom of the content (buttons-wrap) falls
-  // below the viewport, distinguishing between "page is scrollable" (scroll)
-  // and "browser is zoomed in" (reduce zoom) — or both.
+  // below the viewport. The page is genuinely scrollable, so "scroll down"
+  // is always an honest fix; we additionally mention "zoom out" when we can
+  // detect that the browser is zoomed in (then zooming out is the nicer fix).
   (function offscreenHint() {
     const hint   = document.getElementById("offscreen-hint");
     const text   = document.getElementById("offscreen-hint-text");
@@ -1911,87 +1915,54 @@ hub-buy,hub-sell`;
     const panel  = document.getElementById("left-panel");
     if (!hint || !text || !wrap || !panel) return;
 
-    // Threshold below which we still consider content "fully visible"
     const MARGIN = 8;
 
-    function estimateZoomPct() {
-      // devicePixelRatio works well in Chromium/Edge for user zoom.
-      // We compare against the *system* DPR captured at load (which may itself
-      // already reflect HiDPI). The ratio above 1.0 indicates user zoom-in.
-      // Fallback: outerWidth/innerWidth on browsers where that's reliable.
+    function isBrowserZoomed() {
+      // Heuristic: user zoom in Chromium/Edge/Firefox produces a fractional
+      // devicePixelRatio that isn't 1.0 or 2.0 (typical HiDPI baselines).
+      // We treat clearly fractional ratios as "zoomed in".
       const dpr = window.devicePixelRatio || 1;
-      // Heuristic: anything ≥ ~1.1 of the baseline DPR is "zoomed in".
-      // We treat the page as zoomed if dpr is meaningfully > 1 AND innerWidth
-      // is smaller than what we'd expect for a normal desktop layout.
-      return dpr;
+      const fractional = Math.abs(dpr - Math.round(dpr));
+      // Round-trip safe: 1.0 and 2.0 ≈ normal; 1.1, 1.25, 1.5, 1.75 ≈ zoomed
+      return fractional > 0.05;
     }
 
     function update() {
-      // Find the lowest visible content edge we care about
-      const wrapRect = wrap.getBoundingClientRect();
-      const vh = window.innerHeight || document.documentElement.clientHeight;
-
-      const buttonsBottom = wrapRect.bottom;
-      const offscreenBy   = buttonsBottom - vh;
-      const isOffscreen   = offscreenBy > MARGIN;
+      // Use absolute document position of buttons-wrap (no longer fixed)
+      const wrapRect    = wrap.getBoundingClientRect();
+      const vh          = window.innerHeight || document.documentElement.clientHeight;
+      const buttonsBottom = wrapRect.bottom;     // relative to viewport
+      const isOffscreen = buttonsBottom - vh > MARGIN;
 
       if (!isOffscreen) {
         hint.classList.remove("visible");
         return;
       }
 
-      // Decide what advice to give.
-      // - "scroll": the document is taller than the viewport (scrolling works)
-      // - "zoom":   the browser is zoomed in (devicePixelRatio > ~1.1 baseline)
-      const docHeight   = Math.max(
-        document.documentElement.scrollHeight,
-        document.body ? document.body.scrollHeight : 0
-      );
-      const canScroll   = docHeight - vh > MARGIN;
-      const dpr         = estimateZoomPct();
-      // Most desktop displays sit at DPR 1 or 2 (retina). User zoom typically
-      // pushes DPR to fractional values like 1.1, 1.25, 1.5… Heuristic: treat
-      // a fractional DPR > 1.05 (and not very close to 2) as "zoomed in".
-      const fractional  = Math.abs(dpr - Math.round(dpr));
-      const isZoomed    = fractional > 0.05 || (dpr > 1 && dpr < 1.9 && dpr !== 1);
+      const isZoomed = isBrowserZoomed();
+      const isMac    = navigator.platform && /Mac/i.test(navigator.platform);
+      const modKey   = isMac ? '⌘' : 'Ctrl';
 
-      let msg;
-      if (canScroll && isZoomed) {
-        msg = 'More below — scroll down, or press <kbd>Ctrl</kbd>+<kbd>−</kbd> to zoom out';
-      } else if (canScroll) {
-        msg = 'More content below — scroll down ↓';
-      } else if (isZoomed) {
-        msg = 'Content hidden — press <kbd>Ctrl</kbd>+<kbd>−</kbd> to zoom out';
-      } else {
-        // Content extends past the viewport but the page isn't scrollable and
-        // we can't confidently detect zoom — suggest both options.
-        msg = 'More below — scroll down, or zoom out to see everything';
-      }
-      // Use platform-appropriate modifier key
-      if (navigator.platform && /Mac/i.test(navigator.platform)) {
-        msg = msg.replace(/Ctrl/g, '⌘');
-      }
+      const msg = isZoomed
+        ? `More below — scroll ↓ or press <kbd>${modKey}</kbd>+<kbd>−</kbd> to zoom out`
+        : 'More content below — scroll down ↓';
+
       text.innerHTML = msg;
       hint.classList.add("visible");
     }
 
-    // Initial check (after a tick so positioning script has run)
     setTimeout(update, 50);
     window.addEventListener("load",   update);
     window.addEventListener("resize", update);
     window.addEventListener("scroll", update, { passive: true });
 
-    // Catch zoom changes that don't fire resize on all browsers
     if (window.matchMedia) {
       const mq = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
-      if (mq.addEventListener) {
-        mq.addEventListener("change", update);
-      } else if (mq.addListener) {
-        mq.addListener(update);
-      }
+      if (mq.addEventListener)      mq.addEventListener("change", update);
+      else if (mq.addListener)      mq.addListener(update);
     }
 
-    // Hide hint once user has scrolled near the bottom
+    // Hide hint when user has scrolled near the bottom
     window.addEventListener("scroll", () => {
       const vh = window.innerHeight || document.documentElement.clientHeight;
       const scrolledToBottom =
