@@ -485,9 +485,17 @@
       width: 338px;
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 6px;
-      overflow: hidden;
       background: #fff;
       padding: 6px;
+      transition: transform 0.35s ease, box-shadow 0.35s ease;
+      transform-origin: top left;
+      cursor: zoom-in;
+    }
+    #api-map-container:hover {
+      transform: scale(3);
+      z-index: 1000;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      cursor: zoom-out;
     }
     #api-map-container img {
       width: 100%; height: auto; display: block;
