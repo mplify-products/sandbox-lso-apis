@@ -727,10 +727,6 @@
       <div class="map-label">LSO Business &amp; Operational APIs</div>
       <div id="api-map-container">
         <img src="LSO Business and Operational APIs.png" alt="LSO Business and Operational APIs" />
-        <div class="hotspot" style="left:8%;top:35%;" id="hotspot-av" title="Address Validation &amp; Site Query">
-          <div class="hotspot-ring"></div>
-          <div class="hotspot-tooltip">Address Validation &amp; Site Query</div>
-        </div>
       </div>
     </div>
     <div id="info-box">This infographic shows the automation interoperability between companies on the buy and sell side based on the selected item in the dropdown. The data is continuously being updated. If you want to update your company&#39;s API status or add new API status data, please fill in the form below by clicking the &#39;+Share my API status&#39; button. For more information, please contact <a id="info-email" href="#"></a></div>
@@ -1811,15 +1807,7 @@ hub-buy,hub-sell`;
   })();
 
   // ── API Map Hotspots ─────────────────────────────────────────────────────
-  (function() {
-    const AV_GID = "1881293424";
-    document.getElementById("hotspot-av").addEventListener("click", () => {
-      const url = new URL(window.location.href);
-      url.searchParams.set("links", AV_GID);
-      url.searchParams.delete("nodes");
-      window.location.href = url.toString();
-    });
-  })();
+  // (hotspot removed)
 
   // Position buttons-wrap directly below left-panel
   (function positionButtons() {
